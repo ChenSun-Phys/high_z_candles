@@ -3,6 +3,11 @@ A Bayesian Python code to fit the axion-photon parameter space to cosmological d
 
 Written by Manuel A. Buen-Abad and Chen Sun, 2020
 
+Note:
+-----------------------------------------
+
+This is a modified version that adds the options to generate a random ICM magnetic domain realization for each of the galaxy cluster. For the version that reproduces the published article, see our original version here at [this repository](https://github.com/ManuelBuenAbad/cosmo_axions). 
+
 Requirements
 -----------------------------------------
 
