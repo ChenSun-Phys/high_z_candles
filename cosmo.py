@@ -187,6 +187,7 @@ def ADDMod(ma, g, z, h, OmL,
            # ICMdomain
            lst_r_Arr_raw=None,
            lst_L_Arr_raw=None,
+           lst_sintheta_Arr_raw=None,
            varying_ICMdomain=None,
            galaxy_index=None,
 
@@ -212,9 +213,11 @@ def ADDMod(ma, g, z, h, OmL,
         if varying_ICMdomain:
             r_Arr_raw = lst_r_Arr_raw[galaxy_index]
             L_Arr_raw = lst_L_Arr_raw[galaxy_index]
+            sintheta_Arr_raw = lst_sintheta_Arr_raw[galaxy_index]
         else:
             r_Arr_raw = None
             L_Arr_raw = None
+            sintheta_Arr_raw = None
 
         PICM = icm_los_Psurv(ma, g, r_low, r_up, ne_2beta, B_icm,
                              L=L,
@@ -228,6 +231,7 @@ def ADDMod(ma, g, z, h, OmL,
                              # ICMdomain
                              r_Arr_raw=r_Arr_raw,
                              L_Arr_raw=L_Arr_raw,
+                             sintheta_Arr_raw=sintheta_Arr_raw,
                              varying_ICMdomain=varying_ICMdomain,
                              )
 

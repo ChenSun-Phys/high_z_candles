@@ -91,6 +91,7 @@ def icm_Psurv(ma, g, r_ini, r_fin, ne_fn, B_fn,
               # ICMdomain
               r_Arr_raw=None,
               L_Arr_raw=None,
+              sintheta_Arr_raw=None,
               varying_ICMdomain=False,
               **kwargs):
     """
@@ -159,15 +160,16 @@ def icm_Psurv(ma, g, r_ini, r_fin, ne_fn, B_fn,
         # ICMdomain
         if varying_ICMdomain is True:
 
-            def P(rr, L):
-                res = P0(ma, g, L/1000., B=Bicm(rr)*1000., omega=omega_Xrays*1000., mg=mg(rr),
+            def P(rr, L, sintheta):
+                res = P0(ma, g, L/1000., B=Bicm(rr)*1000.*sintheta, omega=omega_Xrays*1000., mg=mg(rr),
                          smoothed=smoothed)  # conversion probability in domain located at radius rr from center
                 return res
 
             # pass r_Arr_raw and L_Arr_raw from kwargs
             r_Arr = r_Arr_raw[np.where(r_Arr_raw < r_fin)]
             L_Arr = L_Arr_raw[:len(r_Arr)]
-            P_Arr = P(r_Arr, L_Arr)
+            sintheta_Arr = sintheta_Arr_raw[:len(r_Arr)]
+            P_Arr = P(r_Arr, L_Arr, sintheta_Arr)
         else:
             N = int(round((r_fin - r_ini)/L))  # number of magnetic domains
             # array of r-values of the domains' centers
@@ -253,6 +255,7 @@ def icm_los_Psurv(ma, g, r_low, r_up, ne_fn, B_fn,
                   # ICMdomain
                   r_Arr_raw=None,
                   L_Arr_raw=None,
+                  sintheta_Arr_raw=None,
                   varying_ICMdomain=False,
                   **kwargs):
     """
@@ -326,6 +329,7 @@ def icm_los_Psurv(ma, g, r_low, r_up, ne_fn, B_fn,
                                   # ICMdomain
                                   r_Arr_raw=r_Arr_raw,
                                   L_Arr_raw=L_Arr_raw,
+                                  sintheta_Arr_raw=sintheta_Arr_raw,
                                   varying_ICMdomain=varying_ICMdomain,
                                   **kwargs)
 
@@ -346,6 +350,7 @@ def icm_los_Psurv(ma, g, r_low, r_up, ne_fn, B_fn,
                                                     # ICMdomain
                                                     r_Arr_raw=r_Arr_raw,
                                                     L_Arr_raw=L_Arr_raw,
+                                                    sintheta_Arr_raw=sintheta_Arr_raw,
                                                     varying_ICMdomain=varying_ICMdomain,
                                                     **kwargs)
 
@@ -451,6 +456,17 @@ def L_ICM_draw(n, Lmin, Lmax, size):
         print('Lmax=%s' % Lmax)
         raise
     return p.rvs(size=size)
+
+
+def sintheta_ICM_draw(size, n=0, thetamin=0., thetamax=np.pi):
+    try:
+        p = gen_power_law(n=n, Lmin=thetamin, Lmax=thetamax)
+    except:
+        print('thetamin=%s' % thetamin)
+        print('thetamax=%s' % thetamax)
+        raise
+    theta_arr = p.rvs(size=size)
+    return np.sin(theta_arr)
 
 
 def check_DA_scattering(ma, g, galaxy_names, data, result, result_mean, result_z, number_of_sigma=2, grid=4, flg_integrate=False, idx_check=None):

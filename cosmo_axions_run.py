@@ -26,7 +26,7 @@ import scipy.linalg as la
 from numpy import pi, sqrt, log, log10, exp, power
 from contextlib import closing
 from ag_probs import omega_plasma
-from icm import L_avg, L_ICM_draw
+from icm import L_avg, L_ICM_draw, sintheta_ICM_draw
 
 import data
 import chi2
@@ -203,6 +203,19 @@ if __name__ == '__main__':
         raise Exception('Do you want to vary ICM domain size? Please check input.param\
                         and specify the varying_ICMdomain parameter with\
                         True or False')
+
+    # # for now the projections will be on when varying_ICMdomain is on.
+    # # one can give it a separate switch as follows.
+    # # projections
+    # try:
+    #     params['ICM_projections']
+    # except KeyError:
+    #     params['ICM_projections'] = False
+    # if params['ICM_projections'] is not True and \
+    #    params['ICM_projections'] is not False:
+    #     raise Exception('Do you want to vary ICM domain size? Please check input.param\
+    #                     and specify the ICM_projections parameter with\
+    #                     True or False')
 
     try:
         params['use_Pantheon']
@@ -572,6 +585,8 @@ if __name__ == '__main__':
         experiments.append('clusters')
 
         # TODO: get # of galaxies
+        # print('clusters shape: %s' % (np.array(clusters_data).shape, ))
+        # print('clusters shape: %s' % (clusters_data[1], ))
         names = clusters_data[0]
         number_of_clusters = len(names)
         if params['varying_ICMdomain']:
@@ -580,16 +595,21 @@ if __name__ == '__main__':
                   number_of_clusters)
             lst_r_Arr_raw = []
             lst_L_Arr_raw = []
+            lst_sintheta_Arr_raw = []
             for i in range(number_of_clusters):
                 L_Arr_raw = L_ICM_draw(n=params['ICM_B_power'], Lmax=params['ICM_B_Lmax'],
                                        Lmin=params['ICM_B_Lmin'], size=int(params['ICM_B_num_of_dom_init_guess']))
                 r_Arr_raw = np.cumsum(L_Arr_raw)
+                sintheta_Arr_raw = sintheta_ICM_draw(
+                    size=int(params['ICM_B_num_of_dom_init_guess']))
                 # save
                 lst_r_Arr_raw.append(r_Arr_raw)
                 lst_L_Arr_raw.append(L_Arr_raw)
+                lst_sintheta_Arr_raw.append(sintheta_Arr_raw)
             # finally update clusters_kwargs
             clusters_kwargs['lst_r_Arr_raw'] = lst_r_Arr_raw
             clusters_kwargs['lst_L_Arr_raw'] = lst_L_Arr_raw
+            clusters_kwargs['lst_sintheta_Arr_raw'] = lst_sintheta_Arr_raw
             print('ICM magnetic domain realizations made.')
 
         # print('!!!!%s' % (clusters_kwargs))
