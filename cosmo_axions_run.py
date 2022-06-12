@@ -238,6 +238,16 @@ if __name__ == '__main__':
                         True or False')
 
     try:
+        params['use_quasars']
+    except KeyError:
+        params['use_quasars'] = False
+    if params['use_quasars'] is not True and \
+       params['use_quasars'] is not False:
+        raise Exception('Do you want to include quasars? Please check input.param\
+                        and specify the use_quasars parameter with\
+                        True or False')
+
+    try:
         params['use_early']
     except KeyError:
         params['use_early'] = False
@@ -321,6 +331,16 @@ if __name__ == '__main__':
         omegaSN = params['omegaSN [eV]']
     except KeyError:
         omegaSN = 1.
+
+    try:
+        omega_UV = params['omega_UV [eV]']
+    except KeyError:
+        omega_UV = 4.96  # 2500 angstrom
+
+    try:
+        omega_X = params['omega_X [eV]']
+    except KeyError:
+        omega_X = 2000  # 2keV X-ray
 
     try:
         B_IGM = params['B_IGM [nG]']
@@ -462,6 +482,18 @@ if __name__ == '__main__':
                   'prob_func': prob_func_IGM,
                   'Nz': Nz_IGM}
 
+    quasars_kwargs = {'B': B_IGM,
+                      'mg': omega_plasma(ne_IGM),
+                      's': s_IGM,
+                      'omega_X': omega_X,  # FIXME
+                      'omega_UV': omega_UV,  # FIXME
+                      'axion_ini_frac': 0.,
+                      'smoothed': smoothed_IGM,
+                      'redshift_dependent': redshift_dependent,
+                      'method': method_IGM,
+                      'prob_func': prob_func_IGM,
+                      'Nz': Nz_IGM}
+
     clusters_kwargs = {'omegaX': omegaX,
                        'omegaCMB': omegaCMB,
                        # IGM
@@ -535,6 +567,14 @@ if __name__ == '__main__':
         experiments.append('shoes')
     else:
         shoes_data = None
+
+    # load quasars
+    if params['use_quasars'] is True:
+        quasars_data = data.load_quasars(dir_lkl,
+                                         params['quasars_lkl'])
+        experiments.append('quasars')
+    else:
+        quasars_data = None
 
     # load Pantheon
     if params['use_Pantheon'] is True:
@@ -647,7 +687,6 @@ if __name__ == '__main__':
 # emcee related deployment
 ##########################
 
-
     def lnprob(x):
         """
         Defining lnprob at the top level, to avoid Pickle errors.
@@ -659,6 +698,7 @@ if __name__ == '__main__':
                            use_BOSSDR12=params['use_BOSSDR12'], boss_data=boss_data,
                            use_BAOlowz=params['use_BAOlowz'], bao_data=bao_data,
                            use_Pantheon=params['use_Pantheon'], pan_data=pan_data, pan_kwargs=pan_kwargs,
+                           use_quasars=params['use_quasars'], quasars_data=quasars_data, quasars_kwargs=quasars_kwargs,
                            use_TDCOSMO=params['use_TDCOSMO'], ext_data=ext_data,
                            use_early=params['use_early'], early_data=early_data,
                            use_clusters=params['use_clusters'], clusters_data=clusters_data, wanna_correct=wanna_correct, fixed_Rvir=fixed_Rvir, clusters_kwargs=clusters_kwargs,

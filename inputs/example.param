@@ -40,6 +40,17 @@ Pantheon_subset = 1048
 # SNe photon energy
 omegaSN [eV] = 1.
 
+
+#
+# quasars
+#
+use_quasars = True
+quasars_lkl = quasar.dat
+# SNe photon energy
+omega_UV [eV] = 4.96
+omega_X [eV] = 2000
+
+
 #
 # BAO-BOSS DR12
 #

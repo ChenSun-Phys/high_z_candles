@@ -58,6 +58,117 @@ def chi2_SH0ES(M0, data=None):
     return chi2
 
 
+def chi2_quasars(x, data=None, vectorize=False, **kwargs):
+    """
+    Computes quasars chi2. 
+    x is the theory point that contains
+        (ma, ga, OmL, h0, qso_gamma, qso_beta)
+    Data must be equal to
+        (qso_name_arr,
+        qso_z_arr,
+        qso_f2500_arr,
+        qso_df2500_arr,
+        qso_f2keV_arr,
+        qso_df2keV_low_arr,
+        qso_df2keV_up_arr)
+    **kwargs are the arguments for LumMod.
+    """
+
+    # theory point
+    (ma, ga, OmL, h0, qso_gamma, qso_beta) = x
+
+    # Anchor_SN, _, Anchor_Ceph, _, _, Anchor_Msig, _, _ = data
+    (qso_name_arr,
+     qso_z_arr,
+     qso_logf2500_arr,
+     qso_dlogf2500_arr,
+     qso_logf2keV_arr,
+     qso_dlogf2keV_low_arr,
+     qso_dlogf2keV_up_arr) = data
+
+    chi2 = 0.
+
+    kwargs_local = kwargs.copy()
+    omega_X = kwargs_local.pop('omega_X')
+    omega_UV = kwargs_local.pop('omega_UV')
+
+    if vectorize:
+        LumMod_vec = np.vectorize(LumMod)
+        tau_at_z_vec = np.vectorize(tau_at_z)
+
+        logPggX_arr = 1/2.5*LumMod_vec(ma=ma,
+                                       g=ga,
+                                       z=qso_z_arr,
+                                       h=h0,
+                                       OmL=OmL,
+                                       omega=omega_X,
+                                       **kwargs_local)
+
+        logPggUV_arr = 1/2.5*LumMod_vec(ma=ma,
+                                        g=ga,
+                                        z=qso_z_arr,
+                                        h=h0,
+                                        OmL=OmL,
+                                        omega=omega_UV,
+                                        **kwargs_local)
+        DL_arr = tau_at_z_vec(qso_z_arr, h0, OmL) * (1.+qso_z_arr)  # [Mpc]
+        mu_th_arr = 2.*(qso_gamma-1)*log10(DL_arr) - logPggX_arr + \
+            qso_gamma*logPggUV_arr + qso_beta
+        #+ (qso_gamma-1)*log10(4.*np.pi)
+
+        # get the measurement
+        mu_exp_arr = (qso_logf2keV_arr - qso_gamma*qso_logf2500_arr)
+
+        # get the 1 sigma std deviation
+        # using the symmetric error for now
+        sigma_arr = np.sqrt(
+            qso_dlogf2500_arr**2 + (qso_dlogf2keV_low_arr + qso_dlogf2keV_up_arr)**2/4)
+
+        chi2 = np.sum((mu_th_arr - mu_exp_arr)**2/sigma_arr**2)
+
+    else:
+        for i in range(len(qso_z_arr)):
+            # compute theoretical prediction
+            z = qso_z_arr[i]
+
+            # use corresponding energy
+            # Note: the current LumMod has a 2.5 in the front.
+            # We don't need it here.
+
+            logPggX = 1/2.5*LumMod(ma=ma,
+                                   g=ga,
+                                   z=z,
+                                   h=h0,
+                                   OmL=OmL,
+                                   omega=omega_X,
+                                   **kwargs_local)
+
+            logPggUV = 1/2.5*LumMod(ma=ma,
+                                    g=ga,
+                                    z=z,
+                                    h=h0,
+                                    OmL=OmL,
+                                    omega=omega_UV,
+                                    **kwargs_local)
+
+            DL = tau_at_z(z, h0, OmL) * (1+z)  # [Mpc]
+            mu_th = 2.*(qso_gamma-1)*log10(DL) - logPggX + \
+                qso_gamma*logPggUV + qso_beta
+            #+ (qso_gamma-1)*log10(4.*np.pi)
+
+            # get the measurement
+            mu_exp = (qso_logf2keV_arr[i] - qso_gamma*qso_logf2500_arr[i])
+
+            # get the 1 sigma std deviation
+            # using the symmetric error for now
+            sigma = np.sqrt(
+                qso_dlogf2500_arr[i]**2 + (qso_dlogf2keV_low_arr[i] + qso_dlogf2keV_up_arr[i])**2/4)
+
+            chi2 += (mu_th - mu_exp)**2/sigma**2
+
+    return chi2
+
+
 def chi2_BOSSDR12(x, data=None):
     """
     Computes BOSSDR12 chi2. data must be equal to (BOSS_rsfid, BOSS_meas_z, BOSS_meas_dM, BOSS_meas_Hz, BOSS_cov, BOSS_icov)
@@ -242,6 +353,7 @@ def lnprob(x,
            use_BOSSDR12=False, boss_data=None,
            use_BAOlowz=False, bao_data=None,
            use_Pantheon=False, pan_data=None, pan_kwargs=None,
+           use_quasars=False, quasars_data=None, quasars_kwargs=None,
            use_TDCOSMO=False, ext_data=None,
            use_early=False, early_data=None,
            use_clusters=False, clusters_data=None, wanna_correct=True, fixed_Rvir=False, clusters_kwargs=None,
@@ -263,12 +375,15 @@ def lnprob(x,
 
     if use_Pantheon:
         M0 = current_point['M0']
+    if use_quasars:
+        qso_gamma = current_point['qso_gamma']
+        qso_beta = current_point['qso_beta']
     if use_BOSSDR12:
         rs = current_point['rs']
 
     # counting the number of experiments used
     experiments_counter = sum(
-        [use_SH0ES, use_Pantheon, use_TDCOSMO, use_early, use_BOSSDR12, use_BAOlowz, use_clusters])
+        [use_SH0ES, use_Pantheon, use_quasars, use_TDCOSMO, use_early, use_BOSSDR12, use_BAOlowz, use_clusters])
     lnprob_each_chi2 = []
 
     if not is_Out_of_Range(x, keys, params):  # to avoid overflow
@@ -294,6 +409,17 @@ def lnprob(x,
 
             if verbose > 2:
                 print('pantheon=%f' % this_chi2)
+
+        # quasars
+        if use_quasars:
+
+            this_chi2 = chi2_quasars(
+                (ma, ga, OmL, h0, qso_gamma, qso_beta), data=quasar_data, **quasar_kwargs)
+            chi2 += this_chi2
+            lnprob_each_chi2.append(this_chi2)
+
+            if verbose > 2:
+                print('quasars=%f' % this_chi2)
 
         # other H0 experiments
         if use_TDCOSMO:

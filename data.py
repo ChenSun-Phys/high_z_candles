@@ -65,6 +65,36 @@ def read_matrix(path):
 # data loading functions
 ##########################
 
+def load_quasars(dir_lkl, anchor_lkl):
+    """Load the quasars from
+    The Chandra view of the relation between X-ray and UV emission in quasars.
+    Bisogni S., Lusso E., Civano F., Nardini E., Risaliti G., Elvis M.,
+    Fabbiano G.
+    <Astron. Astrophys. 655, A109 (2021)>
+    =2021A&A...655A.109B        (SIMBAD/NED BibCode)
+
+    """
+    path = os.path.join(dir_lkl, anchor_lkl)
+
+    (qso_z_arr,
+     qso_logf2500_arr,
+     qso_dlogf2500_arr,
+     qso_logf2keV_arr,
+     qso_dlogf2keV_low_arr,
+     qso_dlogf2keV_up_arr) = np.loadtxt(os.path.join(dir_lkl, anchor_lkl),
+                                        usecols=[1, 6, 7, 8, 9, 10]).T
+
+    qso_name_arr = np.loadtxt(os.path.join(dir_lkl, anchor_lkl),
+                              usecols=[0], dtype='str')
+
+    return (qso_name_arr,
+            qso_z_arr,
+            qso_logf2500_arr,
+            qso_dlogf2500_arr,
+            qso_logf2keV_arr,
+            qso_dlogf2keV_low_arr,
+            qso_dlogf2keV_up_arr)
+
 
 def load_shoes(dir_lkl, anchor_lkl, aB, aBsig):
     """
@@ -76,7 +106,8 @@ def load_shoes(dir_lkl, anchor_lkl, aB, aBsig):
     (Anchor_SN, Anchor_SNsig, Anchor_Ceph,
      Anchor_Cephsig, Anchor_M, Anchor_Msig) = np.loadtxt(os.path.join(dir_lkl, anchor_lkl),
                                                          skiprows=2,
-                                                         delimiter=",")
+                                                         delimiter=",",
+                                                         dtype=None)
 
     Anchor_SN = Anchor_SN - 5 * aB  # this is the measured m_SN
 
