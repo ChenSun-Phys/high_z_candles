@@ -58,7 +58,7 @@ def chi2_SH0ES(M0, data=None):
     return chi2
 
 
-def chi2_quasars(x, data=None, vectorize=False, **kwargs):
+def chi2_quasars(x, data=None, vectorize=True, **kwargs):
     """
     Computes quasars chi2. 
     x is the theory point that contains
@@ -414,7 +414,7 @@ def lnprob(x,
         if use_quasars:
 
             this_chi2 = chi2_quasars(
-                (ma, ga, OmL, h0, qso_gamma, qso_beta), data=quasar_data, **quasar_kwargs)
+                (ma, ga, OmL, h0, qso_gamma, qso_beta), data=quasars_data, **quasars_kwargs)
             chi2 += this_chi2
             lnprob_each_chi2.append(this_chi2)
 

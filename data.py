@@ -56,7 +56,12 @@ def read_matrix(path):
     # Note that this function does not require to skiprows, as it
     # understands the convention of writing the length in the first
     # line
-    matrix = read_table(path).as_matrix().reshape((length, length))
+
+    # deprecated in pandas 0.23.0
+    # "Deprecated since version 0.23.0: Use DataFrame.values() instead."
+    # c.f. https://pandas.pydata.org/pandas-docs/version/0.25.1/reference/api/pandas.DataFrame.as_matrix.html
+    # matrix = read_table(path).as_matrix().reshape((length, length))
+    matrix = read_table(path).values.reshape((length, length))
 
     return matrix
 
@@ -132,7 +137,7 @@ def load_pantheon(dir_lkl, Pantheon_lkl, Pantheon_covmat, Pantheon_subset, verbo
     full_length = len(PAN_lkl)
     subset_length = int(Pantheon_subset)
     del_length = full_length - subset_length
-    del_idx = np.array(random.sample(np.arange(full_length), del_length))
+    del_idx = (random.sample(range(full_length), del_length))
     C00 = np.delete(C00, del_idx, axis=1)
     C00 = np.delete(C00, del_idx, axis=0)
 

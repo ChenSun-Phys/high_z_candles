@@ -140,7 +140,7 @@ if __name__ == '__main__':
         if opt == '-h':
             raise Exception(help_msg)
         elif opt == '-N':
-            chainslength = arg
+            chainslength = int(arg)
             flgN = True
         elif opt == '-o':
             directory = arg
@@ -340,7 +340,13 @@ if __name__ == '__main__':
     try:
         omega_X = params['omega_X [eV]']
     except KeyError:
+        n
         omega_X = 2000  # 2keV X-ray
+
+    try:
+        quasars_vectorize = params['quasars_vectorize']
+    except KeyError:
+        quasars_vectorize = True
 
     try:
         B_IGM = params['B_IGM [nG]']
@@ -492,7 +498,8 @@ if __name__ == '__main__':
                       'redshift_dependent': redshift_dependent,
                       'method': method_IGM,
                       'prob_func': prob_func_IGM,
-                      'Nz': Nz_IGM}
+                      'Nz': Nz_IGM,
+                      'vectorize': quasars_vectorize}
 
     clusters_kwargs = {'omegaX': omegaX,
                        'omegaCMB': omegaCMB,
@@ -687,6 +694,7 @@ if __name__ == '__main__':
 # emcee related deployment
 ##########################
 
+
     def lnprob(x):
         """
         Defining lnprob at the top level, to avoid Pickle errors.
@@ -724,11 +732,23 @@ if __name__ == '__main__':
     nwalkers = number_of_walkers
 
     # initial point, following Gaussian
-    p0 = []
-    for i in range(len(p0mean)):
-        p0component = np.random.normal(p0mean[i], p0sigma[i], nwalkers)
-        p0.append(p0component)
-    p0 = np.array(p0).T
+    is_invalid = True
+    while is_invalid:
+        p0 = []
+        for i in range(len(p0mean)):
+            p0component = np.random.normal(p0mean[i], p0sigma[i], nwalkers)
+
+            p0.append(p0component)
+        p0 = np.array(p0).T
+
+        # check boundary
+        is_invalid = False
+        for p0_i in p0:
+            if chi2.is_Out_of_Range(p0_i, keys, params):
+                print("p0_i:", p0_i)
+                print(chi2.is_Out_of_Range(p0_i, keys, params))
+                is_invalid = True
+                break
 
     # Set up the backend
     counter = 0
