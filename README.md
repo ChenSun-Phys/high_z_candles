@@ -1,5 +1,5 @@
-# cosmo_axions
-A Bayesian Python code to fit the axion-photon parameter space to cosmological data.
+# Cosmo-Axions-Q
+A Bayesian Python code to fit the axion-photon parameter space to cosmological data. We add quasars as high redshift standardizable candles.
 
 Written by Manuel A. Buen-Abad and Chen Sun, 2020, 2022
 
