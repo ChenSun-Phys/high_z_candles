@@ -12,6 +12,7 @@ import numpy as np
 from numpy import pi, sqrt, log, log10, exp, power
 from scipy.integrate import simps, quad
 from ag_probs import P0
+from tools import treat_as_arr
 
 # CONSTANTS AND CONVERSION FACTORS:
 
@@ -95,7 +96,7 @@ def igm_Psurv(ma, g, z,
     prob_func : the form of the probability function: 'small_P' for the P<<1 limit, 'full_log' for log(1-1.5*P), and 'norm_log' for the normalized log: log(abs(1-1.5*P)) [str] (default: 'norm_log')
     Nz : number of redshift bins, for the 'simps' methods (default: 501)
     """
-
+    z_arr, is_scalar = treat_as_arr(z)
     A = (2./3)*(1 + axion_ini_frac)  # equilibration constant
     dH = (c0*1.e-3)/(100.*h)  # Hubble distance [Mpc]
 
@@ -105,7 +106,36 @@ def igm_Psurv(ma, g, z,
         def Pga(zz): return P0(ma, g, s/(1+zz), B=B*(1+zz)**2.,
                                omega=omega*(1.+zz), mg=mg*(1+zz)**1.5, smoothed=smoothed)
 
-        if method == 'simps':
+        if method == 'vectorize':
+            if is_scalar:
+                raise Exception(
+                    "'vectorize' only supports z array. Please choose 'simp' 'quad' or 'old' for scalar redshift")
+
+            # fast vectorization
+            zArr_raw = np.linspace(0., max(z_arr), int(Nz))
+            zArr = sorted(np.concatenate((zArr_raw, z_arr)))
+            zArr = np.unique(zArr)
+            # constructing integrand
+            if prob_func == 'norm_log':
+                integrand = log(np.abs(1 - 1.5*Pga(zArr))) / \
+                    Ekernel(Omega_L, zArr)
+            elif prob_func == 'small_P':
+                integrand = -1.5*Pga(zArr) / Ekernel(Omega_L, zArr)
+            elif prob_func == 'full_log':
+                integrand = log(1 - 1.5*Pga(zArr)) / Ekernel(Omega_L, zArr)
+            else:
+                raise ValueError(
+                    "Argument 'prob_func'={} must be equal to either 'small_P', 'full_log', or 'norm_log'. It's neither.".format(prob_func))
+
+            dzArr = np.concatenate(([0], np.diff(zArr)))
+            integral_raw = np.cumsum(integrand*dzArr)  # integrating
+            integral = np.interp(z_arr, zArr, integral_raw)  # picking input z
+            argument = (dH/s)*integral  # argument of the exponential
+
+        elif method == 'simps':
+            if not is_scalar:
+                raise Exception(
+                    "only 'vectorize' supports z array for now and you chose 'simp'")
 
             # constructing array of redshifts
             if z <= 1.e-10:
@@ -129,7 +159,9 @@ def igm_Psurv(ma, g, z,
             argument = (dH/s)*integral  # argument of the exponential
 
         elif method == 'quad':
-
+            if not is_scalar:
+                raise Exception(
+                    "only 'vectorize' supports z array for now and you chose quad")
             # constructing integrand
             if prob_func == 'norm_log':
                 def integrand(zz): return log(
@@ -147,6 +179,9 @@ def igm_Psurv(ma, g, z,
             argument = (dH/s)*integral  # argument of the exponential
 
         elif method == 'old':
+            if not is_scalar:
+                raise Exception(
+                    "only 'vectorize' supports z array for now and you chose 'old'")
 
             y = DC(z, h=h, Omega_L=Omega_L)  # computing comoving distance
             argument = -1.5*(y/s)*Pga(z)  # argument of exponential
@@ -156,6 +191,9 @@ def igm_Psurv(ma, g, z,
                 "'method' argument must be either 'simps', 'quad', or 'old'.")
 
     else:
+        if is_scalar:
+            raise Exception(
+                "only redshift+vectorize supports z array for now and you chose redshift independent scheme")
 
         y = DC(z, h=h, Omega_L=Omega_L)  # computing comoving distance
         # z-independent probability conversion in one domain

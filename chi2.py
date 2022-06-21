@@ -95,24 +95,25 @@ def chi2_quasars(x, data=None, vectorize=True, full_output=False, **kwargs):
 
     if vectorize:
 
-        LumMod_vec = np.vectorize(LumMod)
+        # LumMod_vec = np.vectorize(LumMod)
+        kwargs_local['method'] = 'vectorize'
         tau_at_z_vec = np.vectorize(tau_at_z)
 
-        logPggX_arr = 1/2.5*LumMod_vec(ma=ma,
-                                       g=ga,
-                                       z=qso_z_arr,
-                                       h=h0,
-                                       OmL=OmL,
-                                       omega=omega_X,
-                                       **kwargs_local)
+        logPggX_arr = 1/2.5*LumMod(ma=ma,
+                                   g=ga,
+                                   z=qso_z_arr,
+                                   h=h0,
+                                   OmL=OmL,
+                                   omega=omega_X,
+                                   **kwargs_local)
 
-        logPggUV_arr = 1/2.5*LumMod_vec(ma=ma,
-                                        g=ga,
-                                        z=qso_z_arr,
-                                        h=h0,
-                                        OmL=OmL,
-                                        omega=omega_UV,
-                                        **kwargs_local)
+        logPggUV_arr = 1/2.5*LumMod(ma=ma,
+                                    g=ga,
+                                    z=qso_z_arr,
+                                    h=h0,
+                                    OmL=OmL,
+                                    omega=omega_UV,
+                                    **kwargs_local)
         DL_arr = tau_at_z_vec(qso_z_arr, h0, OmL) * \
             (1.+qso_z_arr) * _Mpc_over_cm_  # [cm]
         mu_th_arr = 2.*(qso_gamma-1)*log10(DL_arr) + logPggX_arr - \

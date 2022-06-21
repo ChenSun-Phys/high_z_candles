@@ -14,7 +14,7 @@ from scipy.integrate import simps, quad
 from ag_probs import omega_plasma, P0, Pnaive
 from igm import igm_Psurv
 from icm import ne_2beta, B_icm, icm_los_Psurv
-
+from tools import treat_as_arr
 
 # CONSTANTS:
 
@@ -119,13 +119,14 @@ def LumMod(ma, g, z, B, mg, h, OmL,
     ----------
     ma: axion mass [eV]
     g: axion photon coupling  [1/GeV]
-    z: redshift
+    z: redshift, could be scalar or array. Array is preferred for fast vectorization. 
     B: magnetic field, today [nG]
     mg: photon mass [eV]
     h: Hubble [100 km/s/Mpc]
     OmL: Omega_Lambda
     s: domain size [Mpc]
     omega: energy [eV]
+    method: (simps, quad, old) for scalar z, or 'vectorize' if z is an array.
 
     Returns
     -------
