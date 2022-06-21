@@ -10,6 +10,7 @@ from numpy import pi, sqrt, log, log10, exp, power
 from cosmo import H_at_z, tau_at_z, dA_at_z, muLCDM, LumMod, ADDMod
 import data
 
+_Mpc_over_cm_ = 3.0857e+24
 
 ##########################
 # auxiliary functions
@@ -58,7 +59,7 @@ def chi2_SH0ES(M0, data=None):
     return chi2
 
 
-def chi2_quasars(x, data=None, vectorize=True, **kwargs):
+def chi2_quasars(x, data=None, vectorize=True, full_output=False, **kwargs):
     """
     Computes quasars chi2. 
     x is the theory point that contains
@@ -93,6 +94,7 @@ def chi2_quasars(x, data=None, vectorize=True, **kwargs):
     omega_UV = kwargs_local.pop('omega_UV')
 
     if vectorize:
+
         LumMod_vec = np.vectorize(LumMod)
         tau_at_z_vec = np.vectorize(tau_at_z)
 
@@ -111,22 +113,25 @@ def chi2_quasars(x, data=None, vectorize=True, **kwargs):
                                         OmL=OmL,
                                         omega=omega_UV,
                                         **kwargs_local)
-        DL_arr = tau_at_z_vec(qso_z_arr, h0, OmL) * (1.+qso_z_arr)  # [Mpc]
-        mu_th_arr = 2.*(qso_gamma-1)*log10(DL_arr) - logPggX_arr + \
-            qso_gamma*logPggUV_arr + qso_beta
-        #+ (qso_gamma-1)*log10(4.*np.pi)
+        DL_arr = tau_at_z_vec(qso_z_arr, h0, OmL) * \
+            (1.+qso_z_arr) * _Mpc_over_cm_  # [cm]
+        mu_th_arr = 2.*(qso_gamma-1)*log10(DL_arr) + logPggX_arr - \
+            qso_gamma*logPggUV_arr + qso_beta + (qso_gamma-1)*log10(4.*np.pi)
 
         # get the measurement
         mu_exp_arr = (qso_logf2keV_arr - qso_gamma*qso_logf2500_arr)
 
         # get the 1 sigma std deviation
         # using the symmetric error for now
+        # when computing the sigma error, assuming gamma to be 0.6 for logf2500
+        # change on top of gamma=0.6 is of higher order
         sigma_arr = np.sqrt(
-            qso_dlogf2500_arr**2 + (qso_dlogf2keV_low_arr + qso_dlogf2keV_up_arr)**2/4)
+            (0.6*qso_dlogf2500_arr)**2 + (qso_dlogf2keV_low_arr + qso_dlogf2keV_up_arr)**2/4)
 
         chi2 = np.sum((mu_th_arr - mu_exp_arr)**2/sigma_arr**2)
 
     else:
+
         for i in range(len(qso_z_arr)):
             # compute theoretical prediction
             z = qso_z_arr[i]
@@ -151,10 +156,9 @@ def chi2_quasars(x, data=None, vectorize=True, **kwargs):
                                     omega=omega_UV,
                                     **kwargs_local)
 
-            DL = tau_at_z(z, h0, OmL) * (1+z)  # [Mpc]
-            mu_th = 2.*(qso_gamma-1)*log10(DL) - logPggX + \
-                qso_gamma*logPggUV + qso_beta
-            #+ (qso_gamma-1)*log10(4.*np.pi)
+            DL = tau_at_z(z, h0, OmL) * (1+z) * _Mpc_over_cm_  # [cm]
+            mu_th = 2.*(qso_gamma-1)*log10(DL) + logPggX - \
+                qso_gamma*logPggUV + qso_beta + (qso_gamma-1)*log10(4.*np.pi)
 
             # get the measurement
             mu_exp = (qso_logf2keV_arr[i] - qso_gamma*qso_logf2500_arr[i])
@@ -162,11 +166,15 @@ def chi2_quasars(x, data=None, vectorize=True, **kwargs):
             # get the 1 sigma std deviation
             # using the symmetric error for now
             sigma = np.sqrt(
-                qso_dlogf2500_arr[i]**2 + (qso_dlogf2keV_low_arr[i] + qso_dlogf2keV_up_arr[i])**2/4)
+                (0.6*qso_dlogf2500_arr[i])**2 + (qso_dlogf2keV_low_arr[i] + qso_dlogf2keV_up_arr[i])**2/4)
 
             chi2 += (mu_th - mu_exp)**2/sigma**2
 
-    return chi2
+    if full_output and vectorize:
+        # used for debugging to plot out the data and the theory
+        return chi2, mu_th_arr, mu_exp_arr, sigma_arr, qso_z_arr
+    else:
+        return chi2
 
 
 def chi2_BOSSDR12(x, data=None):

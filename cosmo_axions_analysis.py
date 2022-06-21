@@ -94,6 +94,10 @@ if __name__ == '__main__':
         labels.append(r"$M_0$")
     if 'rs' in keys:
         labels.append(r"$r_s^{drag}$")
+    if 'qso_gamma' in keys:
+        labels.append(r"$\gamma$")
+    if 'qso_beta' in keys:
+        labels.append(r"$\beta$")
 
     figure = corner.corner(samples,
                            labels=labels,
@@ -101,13 +105,13 @@ if __name__ == '__main__':
                            show_titles=True,
                            title_kwargs={"fontsize": 12})
     axes = np.array(figure.axes).reshape((dim_of_param, dim_of_param))
-    
+
     plt.savefig(pltpath(directory))
 
     # focusing on ma-ga
     plt.figure(1)
     reduced_labels = [r"$\log\ m_a$", r"$\log\ g_a$"]
-    reduced_samples = samples[:,2:4]
+    reduced_samples = samples[:, 2:4]
     reduced_dim = len(reduced_labels)
 
     figure = corner.corner(reduced_samples,
@@ -119,12 +123,12 @@ if __name__ == '__main__':
                            # levels=[1.-np.exp(-(2.)**2 /2.)],
                            levels=[0.95],
                            title_kwargs={"fontsize": 12},
-                           hist_kwargs={'color':None})
+                           hist_kwargs={'color': None})
     axes = np.array(figure.axes).reshape((reduced_dim, reduced_dim))
 
     p = (figure.axes)[2].collections[0].get_paths()[0]
     v = p.vertices
-    
+
     # saving the points of the 95% C.R. contour
     np.savetxt(pltpath(directory, head='corner_pts', ext='.txt'), v)
 
