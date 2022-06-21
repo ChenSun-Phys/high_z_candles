@@ -1,7 +1,7 @@
 # cosmo_axions
 A Bayesian Python code to fit the axion-photon parameter space to cosmological data.
 
-Written by Manuel A. Buen-Abad and Chen Sun, 2020
+Written by Manuel A. Buen-Abad and Chen Sun, 2020, 2022
 
 Requirements
 -----------------------------------------
@@ -34,7 +34,7 @@ where the argument with flag -b bins the ma-ga parameter space in order to minim
 Bibtex entry
 -----------------------------------------
 
-If you use this code or find it in any way useful for your research, please cite [Buen-Abad, Fan, & Sun (2020)](tba). The Bibtex entry is:
+If you use this code or find it in any way useful for your research, please cite [Buen-Abad, Fan, & Sun (2022)](tba). The Bibtex entry is:
 
 	@article{tba,
 	    author = "",
