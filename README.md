@@ -1,8 +1,3 @@
-# Note:
-
-This is a modified version that adds the options to generate a random ICM magnetic domain realization for each of the galaxy cluster, as well as allowing magnetic field in ICM to have random orientations in each domain. For the version that reproduces the results in the published article, see our original version here at [this repository](https://github.com/ManuelBuenAbad/cosmo_axions). 
-
-
 # cosmo_axions
 A Bayesian Python code to fit the axion-photon parameter space to cosmological data.
 
@@ -39,14 +34,14 @@ where the argument with flag -b bins the ma-ga parameter space in order to minim
 Bibtex entry
 -----------------------------------------
 
-If you use this code or find it in any way useful for your research, please cite [Buen-Abad, Fan, & Sun (2020)](https://arxiv.org/abs/2011.05993). The Bibtex entry is:
+If you use this code or find it in any way useful for your research, please cite [Buen-Abad, Fan, & Sun (2020)](tba). The Bibtex entry is:
 
-	@article{Buen-Abad:2020zbd,
-	    author = "Buen-Abad, Manuel A. and Fan, JiJi and Sun, Chen",
-	    title = "{Constraints on Axions from Cosmic Distance Measurements}",
-	    eprint = "2011.05993",
+	@article{tba,
+	    author = "",
+	    title = "{}",
+	    eprint = "",
 	    archivePrefix = "arXiv",
 	    primaryClass = "hep-ph",
-	    month = "11",
-	    year = "2020"
+	    month = "",
+	    year = ""
 	}

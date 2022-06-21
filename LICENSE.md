@@ -1,6 +1,6 @@
 MIT License
 
-Copyright (c) 2020 Manuel A. Buen-Abad and Chen Sun
+Copyright (c) 2022 Manuel A. Buen-Abad and Chen Sun
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
