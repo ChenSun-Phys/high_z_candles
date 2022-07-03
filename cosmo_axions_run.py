@@ -340,13 +340,23 @@ if __name__ == '__main__':
     try:
         omega_X = params['omega_X [eV]']
     except KeyError:
-        n
         omega_X = 2000  # 2keV X-ray
 
     try:
         quasars_vectorize = params['quasars_vectorize']
     except KeyError:
         quasars_vectorize = True
+
+    try:
+        quasars_z_low = params['quasars_z_low']
+        # only quasars of z > quasars_z_low are used
+    except KeyError:
+        quasars_z_low = 0.
+    try:
+        quasars_z_up = params['quasars_z_up']
+        # only quasars of z < quasars_z_up are used
+    except KeyError:
+        quasars_z_up = 1000.
 
     try:
         B_IGM = params['B_IGM [nG]']
@@ -578,7 +588,9 @@ if __name__ == '__main__':
     # load quasars
     if params['use_quasars'] is True:
         quasars_data = data.load_quasars(dir_lkl,
-                                         params['quasars_lkl'])
+                                         params['quasars_lkl'],
+                                         z_low=quasars_z_low,
+                                         z_up=quasars_z_up)
         experiments.append('quasars')
     else:
         quasars_data = None

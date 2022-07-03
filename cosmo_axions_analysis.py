@@ -102,6 +102,7 @@ if __name__ == '__main__':
     figure = corner.corner(samples,
                            labels=labels,
                            quantiles=[0.16, 0.5, 0.84],
+                           levels=(0.68, 0.95),
                            show_titles=True,
                            title_kwargs={"fontsize": 12})
     axes = np.array(figure.axes).reshape((dim_of_param, dim_of_param))

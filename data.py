@@ -70,13 +70,19 @@ def read_matrix(path):
 # data loading functions
 ##########################
 
-def load_quasars(dir_lkl, anchor_lkl):
+def load_quasars(dir_lkl, anchor_lkl, z_low=0., z_up=1000.):
     """Load the quasars from
     The Chandra view of the relation between X-ray and UV emission in quasars.
     Bisogni S., Lusso E., Civano F., Nardini E., Risaliti G., Elvis M.,
     Fabbiano G.
     <Astron. Astrophys. 655, A109 (2021)>
     =2021A&A...655A.109B        (SIMBAD/NED BibCode)
+
+
+    :param dir_lkl: folder of likelihood
+    :param anchor_lkl: file of likelihood
+    :param z_low: lower cut of the quasar redshift
+    :param z_up: upper cut of the quasar redshift
 
     """
     path = os.path.join(dir_lkl, anchor_lkl)
@@ -92,13 +98,19 @@ def load_quasars(dir_lkl, anchor_lkl):
     qso_name_arr = np.loadtxt(os.path.join(dir_lkl, anchor_lkl),
                               usecols=[0], dtype='str')
 
-    return (qso_name_arr,
-            qso_z_arr,
-            qso_logf2500_arr,
-            qso_dlogf2500_arr,
-            qso_logf2keV_arr,
-            qso_dlogf2keV_low_arr,
-            qso_dlogf2keV_up_arr)
+    # make mask for the cut
+    mask_low = np.where(qso_z_arr > z_low, True, False)
+    mask_up = np.where(qso_z_arr < z_up, True, False)
+    mask = mask_low*mask_up
+    print("---%d quasars are loaded---" % sum(mask))
+
+    return (qso_name_arr[mask],
+            qso_z_arr[mask],
+            qso_logf2500_arr[mask],
+            qso_dlogf2500_arr[mask],
+            qso_logf2keV_arr[mask],
+            qso_dlogf2keV_low_arr[mask],
+            qso_dlogf2keV_up_arr[mask])
 
 
 def load_shoes(dir_lkl, anchor_lkl, aB, aBsig):

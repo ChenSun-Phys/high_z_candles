@@ -26,14 +26,14 @@ anchor_lkl = lstAnchor.csv
 #
 # Early Universe data, from Planck 2018
 #
-use_early = True
+use_early = False
 rsdrag_mean = 147.09
 rsdrag_sig = 0.26
 
 #
 # Pantheon SNe
 #
-use_Pantheon = True
+use_Pantheon = False
 Pantheon_lkl = lcparam_full_long.dat
 Pantheon_covmat = sys_full_long.dat
 Pantheon_subset = 1048
@@ -51,12 +51,14 @@ omega_UV [eV] = 4.96
 omega_X [eV] = 2000
 # about 10-20% increase in performance
 quasars_vectorize = True
+quasars_z_low = 0.
+quasars_z_up = 1.4
 
 
 #
 # BAO-BOSS DR12
 #
-use_BOSSDR12 = True
+use_BOSSDR12 = False
 BOSSDR12_meas = BAO_consensus_results_dM_Hz.txt
 BOSSDR12_covmat = BAO_consensus_covtot_dM_Hz.txt
 BOSSDR12_rsfid = 147.78
@@ -65,7 +67,7 @@ BOSSDR12_rsfid = 147.78
 # low-z DR7 MGS + 6DFs
 # data is given as dV/rs, so no fiducial is needed
 #
-use_BAOlowz = True
+use_BAOlowz = False
 BAOlowz_lkl = bao_smallz_2014.txt
 
 #
@@ -132,14 +134,16 @@ ICM_magnetic_model = A
 #
 # param = [init, low, up, sigma]
 #
-OmL	=  [0.6847,   0.5, 0.75,  0.015]
-h0      =  [  0.73,   0.6,  0.8,   0.02]
-logma	=  [   -14,   -17,  -11,   0.25]
-logga	=  [   -15,  -18.,  -8.,      1]
-M0 	=  [ -19.3,   -21,  -18,    0.1]
-rs	=  [147.78,  120., 160.,     1.]
-qso_gamma = [  0.7,   0.1,  1.0,    0.2]
-qso_beta = [    5.,  -40.,  20.,     1.]
+OmL	  = [0.6847,   0.2, 0.75,  0.015]
+h0        = [  0.73,   0.6,  0.8,   0.02]
+# logma	  = [   -14,   -17,  -11,   0.25]
+logma	  = [   -14,   -17,  -11,     0.]
+# logga	  = [   -15,  -18.,  -8.,      1]
+logga	  = [   -17,  -18.,  -8.,     0.]
+M0 	  = [ -19.3,   -21,  -18,    0.1]
+rs	  = [147.78,  120., 160.,     1.]
+qso_gamma = [   0.7,   0.1,  1.0,    0.2]
+qso_beta  = [    5.,    0.,  10.,    0.3]
 
 #
 # Miscellaneous

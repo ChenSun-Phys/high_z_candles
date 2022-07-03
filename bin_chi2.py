@@ -69,7 +69,7 @@ if __name__ == '__main__':
     # print f['chain'][idx,0], -2*f['log_prob'][idx,0], f['blobs']['pantheon'][idx,0]
 
     pts = np.array(f['chain'])  # the points
-    pts = pts.reshape(-1, 6)
+    pts = pts.reshape(-1, 8)
 
     chi2_tot = np.array(f['log_prob'])
     chi2_tot *= -2
@@ -106,9 +106,11 @@ if __name__ == '__main__':
     # the experiments' chi2s for each point
     each_chi2 = {
         exper: blobs[exper].reshape(-1)[np.where(chain_ga < 0)] for exper in experiments}
-    each_sum = sum([each_chi2[exper][bf_idx] for exper in experiments])
+    chi2_arr = [each_chi2[exper][bf_idx] for exper in experiments]
+    each_sum = sum(chi2_arr)
 
-    print "chi2 best fit: {} = {}".format(bf_chi2, each_sum)  # sanity check
+    print("Each chi2:", chi2_arr)
+    print("chi2 best fit: {} = {}".format(bf_chi2, each_sum))  # sanity check
 
     # the center values
     block_ga = (edges_ga[:-1] + edges_ga[1:])/2.
@@ -259,9 +261,12 @@ def analyze(directory, flg_debug=False):
     # the experiments' chi2s for each point
     each_chi2 = {
         exper: blobs[exper].reshape(-1)[np.where(chain_ga < 0)] for exper in experiments}
-    each_sum = sum([each_chi2[exper][bf_idx] for exper in experiments])
+    chi2_arr = [each_chi2[exper][bf_idx] for exper in experiments]
+    each_sum = sum(chi2_arr)
 
-    print "chi2 best fit: {} = {}".format(bf_chi2, each_sum)  # sanity check
+    print("Each chi2 has:", chi2_arr)
+    print("Chi2 best fit (sum): {} = {}".format(
+        bf_chi2, each_sum))  # sanity check
 
     # the center values
     block_ga = (edges_ga[:-1] + edges_ga[1:])/2.
