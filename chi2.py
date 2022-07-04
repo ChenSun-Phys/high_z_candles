@@ -115,13 +115,19 @@ def chi2_quasars(x, data=None, vectorize=True, full_output=False, **kwargs):
                                     OmL=OmL,
                                     omega=omega_UV,
                                     **kwargs_local)
+        # print(np.sum(np.abs(logPggX_arr)))
+        # print(np.sum(np.abs(logPggUV_arr)))
         DL_arr = tau_at_z_vec(qso_z_arr, h0, OmL) * \
             (1.+qso_z_arr) * _Mpc_over_cm_  # [cm]
         mu_th_arr = 2.*(qso_gamma-1)*log10(DL_arr) + logPggX_arr - \
             qso_gamma*logPggUV_arr + qso_beta + (qso_gamma-1)*log10(4.*np.pi)
+        # print("mu_th_arr:", mu_th_arr)
+        # print(np.sum(np.abs(mu_th_arr)))
 
         # get the measurement
         mu_exp_arr = (qso_logf2keV_arr - qso_gamma*qso_logf2500_arr)
+        # print("mu_exp_arr:", mu_exp_arr)
+        # print(np.sum(np.abs(mu_exp_arr)))
 
         # get the 1 sigma std deviation
         # using the symmetric error for now
