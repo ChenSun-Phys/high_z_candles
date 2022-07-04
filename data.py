@@ -70,39 +70,57 @@ def read_matrix(path):
 # data loading functions
 ##########################
 
-def load_quasars(dir_lkl, anchor_lkl, z_low=0., z_up=1000.):
-    """Load the quasars from
-    The Chandra view of the relation between X-ray and UV emission in quasars.
-    Bisogni S., Lusso E., Civano F., Nardini E., Risaliti G., Elvis M.,
-    Fabbiano G.
-    <Astron. Astrophys. 655, A109 (2021)>
-    =2021A&A...655A.109B        (SIMBAD/NED BibCode)
-
+def load_quasars(dir_lkl, anchor_lkl, z_low=0., z_up=1000., Gamma_low=0., Gamma_up=10.):
+    """Load the quasars from "The Chandra view of the relation between X-ray and UV emission in quasars" by Bisogni S., Lusso E., Civano F., Nardini E., Risaliti G., Elvis M., Fabbiano G..  <Astron. Astrophys. 655, A109 (2021)> =2021A&A...655A.109B        (SIMBAD/NED BibCode)
 
     :param dir_lkl: folder of likelihood
-    :param anchor_lkl: file of likelihood
+    :param anchor_lkl: file of likelihood, either 'quasars_Bisogni2021.txt' or 'quasars_Lusso2020.txt'
     :param z_low: lower cut of the quasar redshift
     :param z_up: upper cut of the quasar redshift
+    :param Gamma_low: lower cut of photon index
+    :param Gamma_up: upper cut of photon index
 
     """
     path = os.path.join(dir_lkl, anchor_lkl)
+    if anchor_lkl == "quasars_Lusso2020.txt":
+        (qso_z_arr,
+         qso_logf2500_arr,
+         qso_dlogf2500_arr,
+         qso_logf2keV_arr,
+         qso_dlogf2keV_low_arr,
+         qso_Gamma_arr) = np.loadtxt(os.path.join(dir_lkl, anchor_lkl),
+                                     usecols=[3, 4, 5, 6, 7, 9]).T
+        # Lusso 2020 uses symmetric error bars
+        qso_dlogf2keV_up_arr = qso_dlogf2keV_low_arr
 
-    (qso_z_arr,
-     qso_logf2500_arr,
-     qso_dlogf2500_arr,
-     qso_logf2keV_arr,
-     qso_dlogf2keV_low_arr,
-     qso_dlogf2keV_up_arr) = np.loadtxt(os.path.join(dir_lkl, anchor_lkl),
-                                        usecols=[1, 6, 7, 8, 9, 10]).T
+    elif anchor_lkl == "quasars_Bisogni2021.txt":
+        (qso_z_arr,
+         qso_logf2500_arr,
+         qso_dlogf2500_arr,
+         qso_logf2keV_arr,
+         qso_dlogf2keV_low_arr,
+         qso_dlogf2keV_up_arr,
+         qso_Gamma_arr) = np.loadtxt(os.path.join(dir_lkl, anchor_lkl),
+                                     usecols=[1, 6, 7, 8, 9, 10, 11]).T
+    else:
+        raise Exception(
+            "The choice of anchor_lkl can be either 'quasars_Bisogni2021.txt' or 'quasars_Lusso2020.txt'. You chose '%s' instead. " % anchor_lkl)
 
     qso_name_arr = np.loadtxt(os.path.join(dir_lkl, anchor_lkl),
                               usecols=[0], dtype='str')
 
     # make mask for the cut
-    mask_low = np.where(qso_z_arr > z_low, True, False)
-    mask_up = np.where(qso_z_arr < z_up, True, False)
-    mask = mask_low*mask_up
-    print("---%d quasars are loaded---" % sum(mask))
+    print("---%d quasars before cut---" % len(qso_z_arr))
+
+    mask_z_low = np.where(qso_z_arr > z_low, True, False)
+    mask_z_up = np.where(qso_z_arr < z_up, True, False)
+    mask = mask_z_low*mask_z_up
+    print("---%d quasars remain after z cut---" % sum(mask))
+
+    mask_Gamma_low = np.where(qso_Gamma_arr > Gamma_low, True, False)
+    mask_Gamma_up = np.where(qso_Gamma_arr < Gamma_up, True, False)
+    mask *= mask_Gamma_low*mask_Gamma_up
+    print("---%d quasars remain after Gamma cut---" % sum(mask))
 
     return (qso_name_arr[mask],
             qso_z_arr[mask],
@@ -110,7 +128,8 @@ def load_quasars(dir_lkl, anchor_lkl, z_low=0., z_up=1000.):
             qso_dlogf2500_arr[mask],
             qso_logf2keV_arr[mask],
             qso_dlogf2keV_low_arr[mask],
-            qso_dlogf2keV_up_arr[mask])
+            qso_dlogf2keV_up_arr[mask],
+            qso_Gamma_arr[mask])
 
 
 def load_shoes(dir_lkl, anchor_lkl, aB, aBsig):

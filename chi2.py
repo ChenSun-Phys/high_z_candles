@@ -85,7 +85,8 @@ def chi2_quasars(x, data=None, vectorize=True, full_output=False, **kwargs):
      qso_dlogf2500_arr,
      qso_logf2keV_arr,
      qso_dlogf2keV_low_arr,
-     qso_dlogf2keV_up_arr) = data
+     qso_dlogf2keV_up_arr,
+     _) = data
 
     chi2 = 0.
 

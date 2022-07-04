@@ -89,7 +89,12 @@ if __name__ == '__main__':
     # corner plot
     plt.figure(0)
     # labels = keys
-    labels = [r"$\Omega_\Lambda$", r"$h$", r"$\log\ m_a$", r"$\log\ g_a$"]
+    # labels = [r"$\Omega_\Lambda$", r"$h$", r"$\log\ m_a$", r"$\log\ g_a$"]
+    labels = [r"$\Omega_\Lambda$", r"$h$"]
+    if 'logma' in keys:
+        labels.append(r"$\log\ m_a$")
+    if 'logga' in keys:
+        labels.append(r"$\log\ g_a$")
     if 'M0' in keys:
         labels.append(r"$M_0$")
     if 'rs' in keys:

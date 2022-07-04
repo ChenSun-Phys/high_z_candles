@@ -49,10 +49,9 @@ quasars_lkl = quasar.dat
 # SNe photon energy
 omega_UV [eV] = 4.96
 omega_X [eV] = 2000
-# about 10-20% increase in performance
 quasars_vectorize = True
 quasars_z_low = 0.
-quasars_z_up = 1.4
+quasars_z_up = 100.
 
 
 #
@@ -140,8 +139,8 @@ h0        = [  0.73,   0.6,  0.8,   0.02]
 logma	  = [   -14,   -17,  -11,     0.]
 # logga	  = [   -15,  -18.,  -8.,      1]
 logga	  = [   -17,  -18.,  -8.,     0.]
-M0 	  = [ -19.3,   -21,  -18,    0.1]
-rs	  = [147.78,  120., 160.,     1.]
+# M0 	  = [ -19.3,   -21,  -18,    0.1]
+# rs	  = [147.78,  120., 160.,     1.]
 qso_gamma = [   0.7,   0.1,  1.0,    0.2]
 qso_beta  = [    5.,    0.,  10.,    0.3]
 
