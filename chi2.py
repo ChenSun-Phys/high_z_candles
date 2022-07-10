@@ -11,6 +11,7 @@ from cosmo import H_at_z, tau_at_z, dA_at_z, muLCDM, LumMod, ADDMod
 import data
 
 _Mpc_over_cm_ = 3.0857e+24
+_Mpc_over_10pc_ = 1.e5
 
 ##########################
 # auxiliary functions
@@ -59,19 +60,89 @@ def chi2_SH0ES(M0, data=None):
     return chi2
 
 
+def chi2_quasars_dist_mod(x, data=None, vectorize=True, full_output=False, **kwargs):
+    """
+    Computes quasars chi2 usign distance modulus. Note that this chi2 is only for testing purpose, as it uses the distance modulus given direclty in the data set of Lusso2020.
+    x is the theory point that contains
+        (ma, ga, OmL, h0, qso_gamma, qso_beta)
+    Data must load with distance mod (get_dm=True) flag in load_quasars(). 
+    **kwargs are the arguments for LumMod.
+    """
+
+    # theory point
+    (ma, ga, OmL, h0, qso_gamma, qso_beta) = x
+
+    # Anchor_SN, _, Anchor_Ceph, _, _, Anchor_Msig, _, _ = data
+    (qso_name_arr,
+     qso_z_arr,
+     qso_logf2500_arr,
+     qso_dlogf2500_arr,
+     qso_logf2keV_arr,
+     qso_dlogf2keV_low_arr,
+     qso_dlogf2keV_up_arr,
+     qso_Gamma_arr,
+     qso_dist_mod_arr,
+     qso_ddist_mod_arr) = data
+
+    chi2 = 0.
+
+    kwargs_local = kwargs.copy()
+    omega_X = kwargs_local.pop('omega_X')
+    omega_UV = kwargs_local.pop('omega_UV')
+
+    if vectorize:
+
+        # LumMod_vec = np.vectorize(LumMod)
+        kwargs_local['method'] = 'vectorize'
+        tau_at_z_vec = np.vectorize(tau_at_z)
+
+        logPggX_arr = 1/2.5*LumMod(ma=ma,
+                                   g=ga,
+                                   z=qso_z_arr,
+                                   h=h0,
+                                   OmL=OmL,
+                                   omega=omega_X,
+                                   **kwargs_local)
+
+        logPggUV_arr = 1/2.5*LumMod(ma=ma,
+                                    g=ga,
+                                    z=qso_z_arr,
+                                    h=h0,
+                                    OmL=OmL,
+                                    omega=omega_UV,
+                                    **kwargs_local)
+        # print(np.sum(np.abs(logPggX_arr)))
+        # print(np.sum(np.abs(logPggUV_arr)))
+        DL_arr = tau_at_z_vec(qso_z_arr, h0, OmL) * \
+            (1.+qso_z_arr) * _Mpc_over_10pc_  # [10 pc]
+        mu_th_arr = 5.*np.log10(DL_arr)
+        # print("mu_th_arr:", mu_th_arr)
+        # print(np.sum(np.abs(mu_th_arr)))
+
+        # get the measurement
+        mu_exp_arr = qso_dist_mod_arr
+
+        # get the 1 sigma std deviation
+        sigma_arr = qso_ddist_mod_arr
+
+        chi2 = np.sum((mu_th_arr - mu_exp_arr)**2/sigma_arr**2)
+
+    else:
+        raise Exception('Only vectorize is implemented for now.')
+
+    if full_output and vectorize:
+        # used for debugging to plot out the data and the theory
+        return chi2, mu_th_arr, mu_exp_arr, sigma_arr, qso_z_arr
+    else:
+        return chi2
+
+
 def chi2_quasars(x, data=None, vectorize=True, full_output=False, **kwargs):
     """
     Computes quasars chi2. 
     x is the theory point that contains
         (ma, ga, OmL, h0, qso_gamma, qso_beta)
-    Data must be equal to
-        (qso_name_arr,
-        qso_z_arr,
-        qso_f2500_arr,
-        qso_df2500_arr,
-        qso_f2keV_arr,
-        qso_df2keV_low_arr,
-        qso_df2keV_up_arr)
+    Data must be have certain structures. See source code for the structure needed. 
     **kwargs are the arguments for LumMod.
     """
 
@@ -120,7 +191,8 @@ def chi2_quasars(x, data=None, vectorize=True, full_output=False, **kwargs):
         DL_arr = tau_at_z_vec(qso_z_arr, h0, OmL) * \
             (1.+qso_z_arr) * _Mpc_over_cm_  # [cm]
         mu_th_arr = 2.*(qso_gamma-1)*log10(DL_arr) + logPggX_arr - \
-            qso_gamma*logPggUV_arr + qso_beta + (qso_gamma-1)*log10(4.*np.pi)
+            qso_gamma*logPggUV_arr + qso_beta + \
+            (qso_gamma-1)*log10(4.*np.pi)  # FIXME
         # print("mu_th_arr:", mu_th_arr)
         # print(np.sum(np.abs(mu_th_arr)))
 
@@ -166,7 +238,8 @@ def chi2_quasars(x, data=None, vectorize=True, full_output=False, **kwargs):
 
             DL = tau_at_z(z, h0, OmL) * (1+z) * _Mpc_over_cm_  # [cm]
             mu_th = 2.*(qso_gamma-1)*log10(DL) + logPggX - \
-                qso_gamma*logPggUV + qso_beta + (qso_gamma-1)*log10(4.*np.pi)
+                qso_gamma*logPggUV + qso_beta + \
+                (qso_gamma-1)*log10(4.*np.pi)
 
             # get the measurement
             mu_exp = (qso_logf2keV_arr[i] - qso_gamma*qso_logf2500_arr[i])

@@ -70,7 +70,7 @@ def read_matrix(path):
 # data loading functions
 ##########################
 
-def load_quasars(dir_lkl, anchor_lkl, z_low=0., z_up=1000., Gamma_low=0., Gamma_up=10.):
+def load_quasars(dir_lkl, anchor_lkl, z_low=0., z_up=1000., Gamma_low=0., Gamma_up=10., get_dm=False):
     """Load the quasars from "The Chandra view of the relation between X-ray and UV emission in quasars" by Bisogni S., Lusso E., Civano F., Nardini E., Risaliti G., Elvis M., Fabbiano G..  <Astron. Astrophys. 655, A109 (2021)> =2021A&A...655A.109B        (SIMBAD/NED BibCode)
 
     :param dir_lkl: folder of likelihood
@@ -79,6 +79,7 @@ def load_quasars(dir_lkl, anchor_lkl, z_low=0., z_up=1000., Gamma_low=0., Gamma_
     :param z_up: upper cut of the quasar redshift
     :param Gamma_low: lower cut of photon index
     :param Gamma_up: upper cut of photon index
+    :param get_dm: if True, return the distance modulus from Lusso2020. (Default: False)
 
     """
     path = os.path.join(dir_lkl, anchor_lkl)
@@ -88,8 +89,10 @@ def load_quasars(dir_lkl, anchor_lkl, z_low=0., z_up=1000., Gamma_low=0., Gamma_
          qso_dlogf2500_arr,
          qso_logf2keV_arr,
          qso_dlogf2keV_low_arr,
-         qso_Gamma_arr) = np.loadtxt(os.path.join(dir_lkl, anchor_lkl),
-                                     usecols=[3, 4, 5, 6, 7, 9]).T
+         qso_Gamma_arr,
+         qso_dist_mod_arr,
+         qso_ddist_mod_arr) = np.loadtxt(os.path.join(dir_lkl, anchor_lkl),
+                                         usecols=[3, 4, 5, 6, 7, 9, 11, 12]).T
         # Lusso 2020 uses symmetric error bars
         qso_dlogf2keV_up_arr = qso_dlogf2keV_low_arr
 
@@ -102,6 +105,9 @@ def load_quasars(dir_lkl, anchor_lkl, z_low=0., z_up=1000., Gamma_low=0., Gamma_
          qso_dlogf2keV_up_arr,
          qso_Gamma_arr) = np.loadtxt(os.path.join(dir_lkl, anchor_lkl),
                                      usecols=[1, 6, 7, 8, 9, 10, 11]).T
+        # there is no distance modulus column in the Bisogni data set.
+        qso_dist_mod_arr = np.array([None]*len(qso_z_arr))
+        qso_ddist_mod_arr = np.array([None]*len(qso_z_arr))
     else:
         raise Exception(
             "The choice of anchor_lkl can be either 'quasars_Bisogni2021.txt' or 'quasars_Lusso2020.txt'. You chose '%s' instead. " % anchor_lkl)
@@ -122,14 +128,27 @@ def load_quasars(dir_lkl, anchor_lkl, z_low=0., z_up=1000., Gamma_low=0., Gamma_
     mask *= mask_Gamma_low*mask_Gamma_up
     print("---%d quasars remain after Gamma cut---" % sum(mask))
 
-    return (qso_name_arr[mask],
-            qso_z_arr[mask],
-            qso_logf2500_arr[mask],
-            qso_dlogf2500_arr[mask],
-            qso_logf2keV_arr[mask],
-            qso_dlogf2keV_low_arr[mask],
-            qso_dlogf2keV_up_arr[mask],
-            qso_Gamma_arr[mask])
+    if get_dm:
+
+        return (qso_name_arr[mask],
+                qso_z_arr[mask],
+                qso_logf2500_arr[mask],
+                qso_dlogf2500_arr[mask],
+                qso_logf2keV_arr[mask],
+                qso_dlogf2keV_low_arr[mask],
+                qso_dlogf2keV_up_arr[mask],
+                qso_Gamma_arr[mask],
+                qso_dist_mod_arr[mask],
+                qso_ddist_mod_arr[mask])
+    else:
+        return (qso_name_arr[mask],
+                qso_z_arr[mask],
+                qso_logf2500_arr[mask],
+                qso_dlogf2500_arr[mask],
+                qso_logf2keV_arr[mask],
+                qso_dlogf2keV_low_arr[mask],
+                qso_dlogf2keV_up_arr[mask],
+                qso_Gamma_arr[mask])
 
 
 def load_shoes(dir_lkl, anchor_lkl, aB, aBsig):
