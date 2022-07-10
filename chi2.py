@@ -64,13 +64,13 @@ def chi2_quasars_dist_mod(x, data=None, vectorize=True, full_output=False, **kwa
     """
     Computes quasars chi2 usign distance modulus. Note that this chi2 is only for testing purpose, as it uses the distance modulus given direclty in the data set of Lusso2020.
     x is the theory point that contains
-        (ma, ga, OmL, h0, qso_gamma, qso_beta)
+        (ma, ga, a2, a3, qso_gamma, qso_beta)
     Data must load with distance mod (get_dm=True) flag in load_quasars(). 
     **kwargs are the arguments for LumMod.
     """
 
     # theory point
-    (ma, ga, OmL, h0, qso_gamma, qso_beta) = x
+    (ma, ga, h0, a2, a3, qso_gamma, qso_beta) = x
 
     # Anchor_SN, _, Anchor_Ceph, _, _, Anchor_Msig, _, _ = data
     (qso_name_arr,
@@ -99,21 +99,23 @@ def chi2_quasars_dist_mod(x, data=None, vectorize=True, full_output=False, **kwa
         logPggX_arr = 1/2.5*LumMod(ma=ma,
                                    g=ga,
                                    z=qso_z_arr,
-                                   h=h0,
-                                   OmL=OmL,
+                                   h0=h0,
+                                   a3=a3,
+                                   a2=a2,
                                    omega=omega_X,
                                    **kwargs_local)
 
         logPggUV_arr = 1/2.5*LumMod(ma=ma,
                                     g=ga,
                                     z=qso_z_arr,
-                                    h=h0,
-                                    OmL=OmL,
+                                    h0=h0,
+                                    a3=a3,
+                                    a2=a2,
                                     omega=omega_UV,
                                     **kwargs_local)
         # print(np.sum(np.abs(logPggX_arr)))
         # print(np.sum(np.abs(logPggUV_arr)))
-        DL_arr = tau_at_z_vec(qso_z_arr, h0, OmL) * \
+        DL_arr = tau_at_z_vec(qso_z_arr, h0=h0, a2=a2, a3=a3) * \
             (1.+qso_z_arr) * _Mpc_over_10pc_  # [10 pc]
         mu_th_arr = 5.*np.log10(DL_arr)
         # print("mu_th_arr:", mu_th_arr)
@@ -141,13 +143,13 @@ def chi2_quasars(x, data=None, vectorize=True, full_output=False, **kwargs):
     """
     Computes quasars chi2. 
     x is the theory point that contains
-        (ma, ga, OmL, h0, qso_gamma, qso_beta)
+        (ma, ga, h0, a2, a3, qso_gamma, qso_beta)
     Data must be have certain structures. See source code for the structure needed. 
     **kwargs are the arguments for LumMod.
     """
 
     # theory point
-    (ma, ga, OmL, h0, qso_gamma, qso_beta) = x
+    (ma, ga, h0, a2, a3, qso_gamma, qso_beta) = x
 
     # Anchor_SN, _, Anchor_Ceph, _, _, Anchor_Msig, _, _ = data
     (qso_name_arr,
@@ -171,28 +173,33 @@ def chi2_quasars(x, data=None, vectorize=True, full_output=False, **kwargs):
         kwargs_local['method'] = 'vectorize'
         tau_at_z_vec = np.vectorize(tau_at_z)
 
-        logPggX_arr = 1/2.5*LumMod(ma=ma,
-                                   g=ga,
-                                   z=qso_z_arr,
-                                   h=h0,
-                                   OmL=OmL,
-                                   omega=omega_X,
-                                   **kwargs_local)
+        # logPggX_arr = 1/2.5*LumMod(ma=ma,
+        #                            g=ga,
+        #                            z=qso_z_arr,
+        #                            h0=h0,
+        #                            a2=a2,
+        #                            a3=a3,
+        #                            omega=omega_X,
+        #                            **kwargs_local)
 
-        logPggUV_arr = 1/2.5*LumMod(ma=ma,
-                                    g=ga,
-                                    z=qso_z_arr,
-                                    h=h0,
-                                    OmL=OmL,
-                                    omega=omega_UV,
-                                    **kwargs_local)
+        # logPggUV_arr = 1/2.5*LumMod(ma=ma,
+        #                             g=ga,
+        #                             z=qso_z_arr,
+        #                             h0=h0,
+        #                             a2=a2,
+        #                             a3=a3,
+        #                             omega=omega_UV,
+        #                             **kwargs_local)
+
         # print(np.sum(np.abs(logPggX_arr)))
         # print(np.sum(np.abs(logPggUV_arr)))
-        DL_arr = tau_at_z_vec(qso_z_arr, h0, OmL) * \
+        DL_arr = tau_at_z_vec(qso_z_arr, h0=h0, a2=a2, a3=a3) * \
             (1.+qso_z_arr) * _Mpc_over_cm_  # [cm]
-        mu_th_arr = 2.*(qso_gamma-1)*log10(DL_arr) + logPggX_arr - \
-            qso_gamma*logPggUV_arr + qso_beta + \
-            (qso_gamma-1)*log10(4.*np.pi)  # FIXME
+        mu_th_arr = 2.*(qso_gamma-1)*log10(DL_arr) + qso_beta + \
+            (qso_gamma-1)*log10(4.*np.pi)
+        # mu_th_arr = 2.*(qso_gamma-1)*log10(DL_arr) + logPggX_arr - \
+        #     qso_gamma*logPggUV_arr + qso_beta + \
+        #     (qso_gamma-1)*log10(4.*np.pi)  # FIXME
         # print("mu_th_arr:", mu_th_arr)
         # print(np.sum(np.abs(mu_th_arr)))
 
@@ -223,20 +230,21 @@ def chi2_quasars(x, data=None, vectorize=True, full_output=False, **kwargs):
             logPggX = 1/2.5*LumMod(ma=ma,
                                    g=ga,
                                    z=z,
-                                   h=h0,
-                                   OmL=OmL,
+                                   h0=h0,
+                                   a2=a2, a3=a3,
                                    omega=omega_X,
                                    **kwargs_local)
 
             logPggUV = 1/2.5*LumMod(ma=ma,
                                     g=ga,
                                     z=z,
-                                    h=h0,
-                                    OmL=OmL,
+                                    h0=h0,
+                                    a2=a2, a3=a3,
                                     omega=omega_UV,
                                     **kwargs_local)
 
-            DL = tau_at_z(z, h0, OmL) * (1+z) * _Mpc_over_cm_  # [cm]
+            DL = tau_at_z(z, h0=h0, a2=a2, a3=a3) * \
+                (1+z) * _Mpc_over_cm_  # [cm]
             mu_th = 2.*(qso_gamma-1)*log10(DL) + logPggX - \
                 qso_gamma*logPggUV + qso_beta + \
                 (qso_gamma-1)*log10(4.*np.pi)
@@ -263,7 +271,7 @@ def chi2_BOSSDR12(x, data=None):
     Computes BOSSDR12 chi2. data must be equal to (BOSS_rsfid, BOSS_meas_z, BOSS_meas_dM, BOSS_meas_Hz, BOSS_cov, BOSS_icov)
     """
 
-    (OmL, h0, rs) = x
+    (h0, a2, a3, rs) = x
     BOSS_rsfid, BOSS_meas_z, BOSS_meas_dM, BOSS_meas_Hz, _, BOSS_icov = data
 
     chi2 = 0.
@@ -271,8 +279,8 @@ def chi2_BOSSDR12(x, data=None):
 
     for i, z in enumerate(BOSS_meas_z):
 
-        DM_at_z = tau_at_z(z, h0, OmL)  # comoving
-        H_at_z_val = H_at_z(z, h0, OmL, unit='SI')  # in km/s/Mpc
+        DM_at_z = tau_at_z(z, h0=h0, a2=a2, a3=a3)  # comoving
+        H_at_z_val = H_at_z(z, h0=h0, a2=a2, a3=a3, unit='SI')  # in km/s/Mpc
 
         theo_DM_rdfid_by_rd_in_Mpc = DM_at_z / rs * BOSS_rsfid
         theo_H_rd_by_rdfid = H_at_z_val * rs / BOSS_rsfid
@@ -295,13 +303,13 @@ def chi2_BAOlowz(x, data=None):
     Computes BAOlowz chi2. data must be equal to (BAOlowz_meas_exp, BAOlowz_meas_z, BAOlowz_meas_rs_dV, BAOlowz_meas_sigma, BAOlowz_meas_type)
     """
 
-    (OmL, h0, rs) = x
+    (h0, a2, a3, rs) = x
     _, BAOlowz_meas_z, BAOlowz_meas_rs_dV, BAOlowz_meas_sigma, BAOlowz_meas_type = data
 
     chi2 = 0.
     for i, z in enumerate(BAOlowz_meas_z):
-        da = dA_at_z(z, h0, OmL)
-        dr = z / H_at_z(z, h0, OmL)
+        da = dA_at_z(z, h0=h0, a2=a2, a3=a3)
+        dr = z / H_at_z(z, h0=h0, a2=a2, a3=a3)
         dv = (da * da * (1 + z) * (1 + z) * dr)**(1. / 3.)
 
         if BAOlowz_meas_type[i] == 3:
@@ -318,7 +326,7 @@ def chi2_Pantheon(x, data=None, **kwargs):
     Computes Pantheon chi2. data must be equal to (PAN_lkl, PAN_cov). **kwargs are the arguments for LumMod.
     """
 
-    (ma, ga, OmL, h0, M0) = x
+    (ma, ga, h0, a2, a3, M0) = x
     PAN_lkl, PAN_cov = data
 
     chi2 = 0.
@@ -331,9 +339,9 @@ def chi2_Pantheon(x, data=None, **kwargs):
         z = rec[0]
         m_meas = rec[1]
 
-        change = LumMod(ma, ga, z, h=h0, OmL=OmL, **kwargs)
+        change = LumMod(ma, ga, z, h0=h0, a2=a2, a3=a3, **kwargs)
 
-        residuals.append(muLCDM(z, h0, OmL) - m_meas + M0 - change)
+        residuals.append(muLCDM(z, h0=h0, a2=a2, a3=a3) - m_meas + M0 - change)
 
     L_residuals = la.solve_triangular(
         PAN_cov, residuals, lower=True, check_finite=False)
@@ -378,7 +386,7 @@ def chi2_clusters(pars, data=None, wanna_correct=True, fixed_Rvir=False, **kwarg
     Computes clusters chi2. data must be equal to (names, z_cls, DA_cls, err_cls, asymm_cls, ne0_cls, beta_cls, rc_out_cls, f_cls, rc_in_cls, Rvir_cls). **kwargs are the arguments of ADDMod.
     """
 
-    (ma, ga, OmL, h0) = pars
+    (ma, ga, h0, a2, a3) = pars
     names, z_cls, DA_cls, err_cls, asymm_cls, ne0_cls, beta_cls, rc_out_cls, f_cls, rc_in_cls, Rvir_cls = data
 
     chi2 = 0.
@@ -402,7 +410,7 @@ def chi2_clusters(pars, data=None, wanna_correct=True, fixed_Rvir=False, **kwarg
             # each cluster has its own virial radius, already computed under some fiducial LCDM assumption
             r_up = Rvir_cls[i]
 
-        factor = ADDMod(ma, ga, z, h0, OmL,
+        factor = ADDMod(ma, ga, z, h0=h0, a2=a2, a3=a3,
                         ne0=ne0,
                         rc_outer=rc_outer,
                         beta_outer=beta_outer,
@@ -413,7 +421,7 @@ def chi2_clusters(pars, data=None, wanna_correct=True, fixed_Rvir=False, **kwarg
                         galaxy_index=i,
                         **kwargs)
 
-        DA_th = dA_at_z(z, h0, OmL) * factor
+        DA_th = dA_at_z(z, h0=h0, a2=a2, a3=a3) * factor
 
         residuals.append(DA - DA_th)
 
@@ -459,8 +467,9 @@ def lnprob(x,
 
     ma = 10**current_point['logma']
     ga = 10**current_point['logga']
-    OmL = current_point['OmL']
     h0 = current_point['h0']
+    a2 = current_point['a2']
+    a3 = current_point['a3']
 
     if use_Pantheon:
         M0 = current_point['M0']
@@ -492,7 +501,7 @@ def lnprob(x,
         if use_Pantheon:
 
             this_chi2 = chi2_Pantheon(
-                (ma, ga, OmL, h0, M0), data=pan_data, **pan_kwargs)
+                (ma, ga, h0, a2, a3, M0), data=pan_data, **pan_kwargs)
             chi2 += this_chi2
             lnprob_each_chi2.append(this_chi2)
 
@@ -503,7 +512,7 @@ def lnprob(x,
         if use_quasars:
 
             this_chi2 = chi2_quasars(
-                (ma, ga, OmL, h0, qso_gamma, qso_beta), data=quasars_data, **quasars_kwargs)
+                (ma, ga, h0, a2, a3, qso_gamma, qso_beta), data=quasars_data, **quasars_kwargs)
             chi2 += this_chi2
             lnprob_each_chi2.append(this_chi2)
 
@@ -532,7 +541,7 @@ def lnprob(x,
         # BOSS DR12
         if use_BOSSDR12:
 
-            this_chi2 = chi2_BOSSDR12((OmL, h0, rs), data=boss_data)
+            this_chi2 = chi2_BOSSDR12((h0, a2, a3, rs), data=boss_data)
             chi2 += this_chi2
             lnprob_each_chi2.append(this_chi2)
 
@@ -542,7 +551,7 @@ def lnprob(x,
         # BAOlowz (6DFs + BOSS DR7 MGS, called smallz in MontePython)
         if use_BAOlowz:
 
-            this_chi2 = chi2_BAOlowz((OmL, h0, rs), data=bao_data)
+            this_chi2 = chi2_BAOlowz((h0, a2, a3, rs), data=bao_data)
             chi2 += this_chi2
             lnprob_each_chi2.append(this_chi2)
 
@@ -552,7 +561,7 @@ def lnprob(x,
         # clusters
         if use_clusters:
 
-            this_chi2 = chi2_clusters((ma, ga, OmL, h0), data=clusters_data,
+            this_chi2 = chi2_clusters((ma, ga, h0, a2, a3), data=clusters_data,
                                       wanna_correct=wanna_correct, fixed_Rvir=fixed_Rvir, **clusters_kwargs)
             chi2 += this_chi2
             lnprob_each_chi2.append(this_chi2)

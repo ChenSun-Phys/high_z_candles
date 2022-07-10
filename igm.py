@@ -70,7 +70,8 @@ def igm_Psurv(ma, g, z,
               omega=1.,
               mg=3.e-15,
               h=0.7,
-              Omega_L=0.7,
+              a2=0.,
+              a3=0.,
               axion_ini_frac=0.,
               smoothed=False,
               redshift_dependent=True,
@@ -88,7 +89,8 @@ def igm_Psurv(ma, g, z,
     omega : photon energy, today [eV] (default: 1.)
     mg : photon mass [eV] (default: 3.e-15)
     h : reduced Hubble parameter H0/100 [km/s/Mpc] (default: 0.7)
-    Omega_L : cosmological constant fractional density (default: 0.7)
+    a2: expansion coeff
+    a3: expansion coeff
     axion_ini_frac : the initial intensity fraction of axions: I_axion/I_photon (default: 0.)
     smoothed : whether sin^2 in conversion probability is smoothed out [bool] (default: False)
     redshift_dependent : whether the IGM background depends on redshift [bool] (default: True)

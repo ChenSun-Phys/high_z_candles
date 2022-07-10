@@ -26,83 +26,86 @@ _1_over_cm_eV_ = 1.9732698045930252e-5  # [1/cm/eV]
 
 # FUNCTIONS:
 
-def Ekernel(OmL, z):
-    try:
-        res, _ = quad(lambda zp: 1 / sqrt(OmL + (1 - OmL) * (1 + zp)**3), 0, z)
-    except Warning:
-        print('OmL=%e, z=%e' % (OmL, z))
-        raise Exception
-    return res
+# def Ekernel(a2, a3, z):
+#     try:
+#         res, _ = quad(lambda zp: 1 / sqrt(OmL + (1 - OmL) * (1 + zp)**3), 0, z)
+#     except Warning:
+#         print('OmL=%e, z=%e' % (OmL, z))
+#         raise Exception
+#     return res
 
 
-def H_at_z(z, h0, OmL, unit='Mpc'):
+def H_at_z(z, h0, a2, a3, unit='Mpc'):
     """
     Hubble at z 
 
     :param z: redshift
     :param h0:  H in [100*km/s/Mpc]
-    :param OmL: Omega_Lambda
+    :param a2: the second coefficient of the log(1+z) expansion
+    :param a3: the third coefficient of the log(1+z) expansion
     :param unit: flag to change the output unit
     :returns: H [1/Mpc] by default, or H [km/s/Mpc]
 
     """
+    x = np.log(1.+z)
+    shape = (1.+z)**2 / (1. + (2.*a2-1.)*x + (3.*a3-a2)*x**2 - a3*x**3)
     if unit == 'Mpc':
-        res = h0*100.*sqrt(OmL + (1 - OmL) * (1 + z)**3)/(_c_/1000.)
+        res = h0*100.*shape/(_c_/1000.)
     else:
-        res = h0*100.*sqrt(OmL + (1 - OmL) * (1 + z)**3)
+        res = h0*100.*shape
     return res
 
 
-def tau_at_z(z, h0, OmL):
+def dL_at_z(z, h0, a2, a3):
+    """compute the luminosity distance, return in Mpc
+
+    :param z: redshfit
+    :param h0: Hubble in 100 km/s/Mpc
+    :param a2: the second coefficient of the log(1+z) expansion
+    :param a3: the third coefficient of the log(1+z) expansion
+
     """
-    Compute the comoving distance, return in Mpc
+    x = np.log(1.+z)
+    res = _c_/(h0*100.*1000.)*(x + a2*x**2 + a3*x**3)
+    return res
+
+
+def tau_at_z(z, h0, a2, a3):
+    """Compute the comoving distance, return in Mpc
 
     Parameters
     ----------
-    z : scalar
+    :param z : scalar
         redshift
-    h0 : scalar
+    :param h0 : scalar
         Hubble in 100 km/s/Mpc
-    OmL : scalar
-        Omega_Lambda
-
+    :param a2: the second coefficient of the log(1+z) expansion
+    :param a3: the third coefficient of the log(1+z) expansion
     """
-    try:
-        res, _ = quad(lambda zp: 1. / sqrt(OmL +
-                                           (1 - OmL) * (1 + zp)**3), 0., z)
-    except Warning:
-        print('OmL=%e, z=%e' % (OmL, z))
-        raise Exception
-    res = res * _c_/1e5/h0
+    res = dL_at_z(z, h0, a2, a3)/(1.+z)
     return res
 
 
-def dA_at_z(z, h0, OmL):
+def dA_at_z(z, h0, a2, a3):
     """
     Angular distance [Mpc]
 
     :param z: redshift
     :param h0: H in [100*km/s/Mpc]
-    :param OmL: Omega_Lambda
     :returns: angular distance [Mpc]
 
     """
-    return tau_at_z(z, h0, OmL)/(1.+z)
+    return dL_at_z(z, h0, a2, a3)/(1.+z)**2
 
 
-def muLCDM(z, h0, OmL):
-    try:
-        res = 5. * log10((1.+z) * Ekernel(OmL, z)) + \
-            5.*log10(_c_/(h0*1e5)) + 25
-    except Warning:
-        print('z=%e, OmL=%e' % (z, OmL))
-        print('h0=%e' % h0)
-        print('(1+z)*Ekernel=%e, c/h0=%e' %
-              ((1. + z) * Ekernel(OmL, z), _c_ / (h0 * 1e5)))
+def muLCDM(z, h0, a2, a3):
+    """distance modulus defined as 5*log10(DL/10pc)
+    """
+    res = 5.*np.log10(dL_at_z*1.e5)
     return res
 
 
-def LumMod(ma, g, z, B, mg, h, OmL,
+def LumMod(ma, g, z, B, mg, h0, a2, a3,
            s=1.,
            omega=1.,
            axion_ini_frac=0.,
@@ -111,52 +114,10 @@ def LumMod(ma, g, z, B, mg, h, OmL,
            method='simps',
            prob_func='norm_log',
            Nz=501):
-    """
-    Here we use a simple function to modify the intrinsic luminosity of the SN
-    so that mu_th = mu_STD - LumMod(). This is the one that takes into account the redshift
-
-    Parameters
-    ----------
-    ma: axion mass [eV]
-    g: axion photon coupling  [1/GeV]
-    z: redshift, could be scalar or array. Array is preferred for fast vectorization. 
-    B: magnetic field, today [nG]
-    mg: photon mass [eV]
-    h: Hubble [100 km/s/Mpc]
-    OmL: Omega_Lambda
-    s: domain size [Mpc]
-    omega: energy [eV]
-    method: (simps, quad, old) for scalar z, or 'vectorize' if z is an array.
-
-    Returns
-    -------
-    res: scalar, delta M in the note
-
-    """
-
-    try:
-        # 2.5log10(L/L(1e-5Mpc))
-        res = 2.5 * log10(igm_Psurv(ma, g, z,
-                                    s=s,
-                                    B=B,
-                                    omega=omega,
-                                    mg=mg,
-                                    h=h,
-                                    Omega_L=OmL,
-                                    axion_ini_frac=axion_ini_frac,
-                                    smoothed=smoothed,
-                                    redshift_dependent=redshift_dependent,
-                                    method=method,
-                                    prob_func=prob_func,
-                                    Nz=Nz))
-
-    except Warning:
-        print('ma=%e, g=%e, y=%e' % (ma, g, y))
-        raise Exception('Overflow!!!')
-    return res
+    raise Exception('Not implemented!')
 
 
-def ADDMod(ma, g, z, h, OmL,
+def ADDMod(ma, g, z, h0, a2, a3,
 
            omegaX=1.e4,
            omegaCMB=2.4e-4,
@@ -208,67 +169,4 @@ def ADDMod(ma, g, z, h, OmL,
     Function that modifies the ADDs from clusters, written in Eq. 12 of Manuel's notes.
     """
 
-    if ICM_effect:
-
-        # ICMdomain
-        if varying_ICMdomain:
-            r_Arr_raw = lst_r_Arr_raw[galaxy_index]
-            L_Arr_raw = lst_L_Arr_raw[galaxy_index]
-            sintheta_Arr_raw = lst_sintheta_Arr_raw[galaxy_index]
-        else:
-            r_Arr_raw = None
-            L_Arr_raw = None
-            sintheta_Arr_raw = None
-
-        PICM = icm_los_Psurv(ma, g, r_low, r_up, ne_2beta, B_icm,
-                             L=L,
-                             omega_Xrays=omegaX/1000.,
-                             axion_ini_frac=0.,
-                             smoothed=smoothed_ICM, method=method_ICM, return_arrays=return_arrays, prob_func=prob_func_ICM, Nr=Nr_ICM, los_method=los_method, los_use_prepared_arrays=los_use_prepared_arrays, los_Nr=los_Nr,
-                             # B_icm
-                             B_ref=B_ref, r_ref=r_ref, eta=eta,
-                             # ne_2beta
-                             ne0=ne0, rc_outer=rc_outer, beta_outer=beta_outer, f_inner=f_inner, rc_inner=rc_inner, beta_inner=beta_inner,
-                             # ICMdomain
-                             r_Arr_raw=r_Arr_raw,
-                             L_Arr_raw=L_Arr_raw,
-                             sintheta_Arr_raw=sintheta_Arr_raw,
-                             varying_ICMdomain=varying_ICMdomain,
-                             )
-
-        Pg, Pa = PICM, 1.-PICM
-        IaIg = Pa/Pg
-
-    else:
-        Pg = 1.
-        IaIg = 0.
-
-    Pgg_X = igm_Psurv(ma, g, z,
-                      s=sIGM,
-                      B=BIGM,
-                      omega=omegaX,
-                      mg=mgIGM,
-                      h=h,
-                      Omega_L=OmL,
-                      axion_ini_frac=IaIg,
-                      smoothed=smoothed_IGM,
-                      redshift_dependent=redshift_dependent,
-                      method=method_IGM,
-                      prob_func=prob_func_IGM,
-                      Nz=Nz_IGM)
-
-    Pgg_CMB = igm_Psurv(ma, g, z,
-                        s=sIGM,
-                        B=BIGM,
-                        omega=omegaCMB,
-                        mg=mgIGM,
-                        h=h,
-                        Omega_L=OmL,
-                        axion_ini_frac=0.,
-                        smoothed=smoothed_IGM,
-                        redshift_dependent=redshift_dependent,
-                        method=method_IGM,
-                        prob_func=prob_func_IGM,
-                        Nz=Nz_IGM)
-
-    return Pgg_CMB**2. / (Pgg_X * Pg)
+    raise Exception('Not implemented!')
