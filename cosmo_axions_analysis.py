@@ -90,7 +90,8 @@ if __name__ == '__main__':
     plt.figure(0)
     # labels = keys
     # labels = [r"$\Omega_\Lambda$", r"$h$", r"$\log\ m_a$", r"$\log\ g_a$"]
-    labels = [r"$\Omega_\Lambda$", r"$h$"]
+    # labels = [r"$\Omega_\Lambda$", r"$h$"]
+    labels = [r"$a_2$", r"$a_3$", r"$h_0$"]
     if 'logma' in keys:
         labels.append(r"$\log\ m_a$")
     if 'logga' in keys:
@@ -114,28 +115,28 @@ if __name__ == '__main__':
 
     plt.savefig(pltpath(directory))
 
-    # focusing on ma-ga
-    plt.figure(1)
-    reduced_labels = [r"$\log\ m_a$", r"$\log\ g_a$"]
-    reduced_samples = samples[:, 2:4]
-    reduced_dim = len(reduced_labels)
+    # # focusing on ma-ga
+    # plt.figure(1)
+    # reduced_labels = [r"$\log\ m_a$", r"$\log\ g_a$"]
+    # reduced_samples = samples[:, 2:4]
+    # reduced_dim = len(reduced_labels)
 
-    figure = corner.corner(reduced_samples,
-                           labels=reduced_labels,
-                           quantiles=[0.16, 0.5, 0.84],
-                           color='r', show_titles=True,
-                           plot_datapoints=False,
-                           plot_density=False,
-                           # levels=[1.-np.exp(-(2.)**2 /2.)],
-                           levels=[0.95],
-                           title_kwargs={"fontsize": 12},
-                           hist_kwargs={'color': None})
-    axes = np.array(figure.axes).reshape((reduced_dim, reduced_dim))
+    # figure = corner.corner(reduced_samples,
+    #                        labels=reduced_labels,
+    #                        quantiles=[0.16, 0.5, 0.84],
+    #                        color='r', show_titles=True,
+    #                        plot_datapoints=False,
+    #                        plot_density=False,
+    #                        # levels=[1.-np.exp(-(2.)**2 /2.)],
+    #                        levels=[0.95],
+    #                        title_kwargs={"fontsize": 12},
+    #                        hist_kwargs={'color': None})
+    # axes = np.array(figure.axes).reshape((reduced_dim, reduced_dim))
 
-    p = (figure.axes)[2].collections[0].get_paths()[0]
-    v = p.vertices
+    # p = (figure.axes)[2].collections[0].get_paths()[0]
+    # v = p.vertices
 
-    # saving the points of the 95% C.R. contour
-    np.savetxt(pltpath(directory, head='corner_pts', ext='.txt'), v)
+    # # saving the points of the 95% C.R. contour
+    # np.savetxt(pltpath(directory, head='corner_pts', ext='.txt'), v)
 
-    plt.savefig(pltpath(directory, head='custom'))
+    # plt.savefig(pltpath(directory, head='custom'))
