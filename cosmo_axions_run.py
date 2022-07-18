@@ -359,6 +359,13 @@ if __name__ == '__main__':
         quasars_z_up = 1000.
 
     try:
+        quasars_delta = params['quasars_delta']
+        # the intrinsic scattering of UV-X relation,
+        # in terms of log10(FX)
+    except KeyError:
+        quasars_delta = 0.15
+
+    try:
         B_IGM = params['B_IGM [nG]']
     except KeyError:
         B_IGM = 1.
@@ -501,8 +508,9 @@ if __name__ == '__main__':
     quasars_kwargs = {'B': B_IGM,
                       'mg': omega_plasma(ne_IGM),
                       's': s_IGM,
-                      'omega_X': omega_X,  # FIXME
-                      'omega_UV': omega_UV,  # FIXME
+                      'omega_X': omega_X,  # will be popped inside chi2_quasars
+                      'omega_UV': omega_UV,  # will be popped inside chi2_quasars
+                      'quasars_delta': quasars_delta,
                       'axion_ini_frac': 0.,
                       'smoothed': smoothed_IGM,
                       'redshift_dependent': redshift_dependent,

@@ -62,11 +62,7 @@ def chi2_SH0ES(M0, data=None):
 
 def chi2_quasars_dist_mod(x, data=None, vectorize=True, full_output=False, **kwargs):
     """
-    Computes quasars chi2 usign distance modulus. Note that this chi2 is only for testing purpose, as it uses the distance modulus given direclty in the data set of Lusso2020.
-    x is the theory point that contains
-        (ma, ga, OmL, h0, qso_gamma, qso_beta)
-    Data must load with distance mod (get_dm=True) flag in load_quasars(). 
-    **kwargs are the arguments for LumMod.
+    Computes quasars chi2 usign distance modulus. Note that this chi2 is only for testing purpose, as it uses the distance modulus given direclty in the data set of Lusso2020. This doesn't take into account the intrinsic scattering either. 
     """
 
     # theory point
@@ -137,13 +133,15 @@ def chi2_quasars_dist_mod(x, data=None, vectorize=True, full_output=False, **kwa
         return chi2
 
 
-def chi2_quasars(x, data=None, vectorize=True, full_output=False, **kwargs):
-    """
-    Computes quasars chi2. 
-    x is the theory point that contains
-        (ma, ga, OmL, h0, qso_gamma, qso_beta)
-    Data must be have certain structures. See source code for the structure needed. 
-    **kwargs are the arguments for LumMod.
+def chi2_quasars(x, data=None, vectorize=True, full_output=False, quasars_delta=None, **kwargs):
+    """Computes quasars chi2.     **kwargs contain the arguments for LumMod. 
+
+    :param x: the theory point that contains (ma, ga, OmL, h0, qso_gamma, qso_beta)
+    :param data: must be have certain structures. See source code for the structure needed. 
+    :param vectorize: whether to vectorize the computation
+    :param full_output: whether to output other quantities besides chi2, useful for testing. 
+    :param quasars_delta: the intrinsic scattering of the UV-X relation
+
     """
 
     # theory point
@@ -161,12 +159,14 @@ def chi2_quasars(x, data=None, vectorize=True, full_output=False, **kwargs):
 
     chi2 = 0.
 
+    # Note: the 'vectorize' flag is extracted automatically
+    # and set to 'vectorize' in chi2_quasars(),
+    # so it's no longer in kwargs or kwargs_local
     kwargs_local = kwargs.copy()
     omega_X = kwargs_local.pop('omega_X')
     omega_UV = kwargs_local.pop('omega_UV')
 
     if vectorize:
-
         # LumMod_vec = np.vectorize(LumMod)
         kwargs_local['method'] = 'vectorize'
         tau_at_z_vec = np.vectorize(tau_at_z)
@@ -206,7 +206,7 @@ def chi2_quasars(x, data=None, vectorize=True, full_output=False, **kwargs):
         # when computing the sigma error, assuming gamma to be 0.6 for logf2500
         # change on top of gamma=0.6 is of higher order
         sigma_arr = np.sqrt(
-            (0.6*qso_dlogf2500_arr)**2 + (qso_dlogf2keV_low_arr + qso_dlogf2keV_up_arr)**2/4)
+            (0.6*qso_dlogf2500_arr)**2 + (qso_dlogf2keV_low_arr + qso_dlogf2keV_up_arr)**2/4 + quasars_delta**2)  # intrinsic scattering added here
 
         chi2 = np.sum((mu_th_arr - mu_exp_arr)**2/sigma_arr**2)
 
@@ -313,7 +313,7 @@ def chi2_BAOlowz(x, data=None):
     return chi2
 
 
-def chi2_Pantheon(x, data=None, **kwargs):
+def chi2_Pantheon(x, data=None, vectorize=True, **kwargs):
     """
     Computes Pantheon chi2. data must be equal to (PAN_lkl, PAN_cov). **kwargs are the arguments for LumMod.
     """
@@ -322,18 +322,31 @@ def chi2_Pantheon(x, data=None, **kwargs):
     PAN_lkl, PAN_cov = data
 
     chi2 = 0.
-    residuals = []
 
     # numerical scan
-    # analytically integrating out
 
-    for rec in PAN_lkl:
-        z = rec[0]
-        m_meas = rec[1]
+    if vectorize:
+        # so that kwargs is not touched
+        kwargs_local = kwargs.copy()
+        # overwrite the kwargs that's fed to LumMod
+        kwargs_local['method'] = 'vectorize'
+        z_arr = PAN_lkl[:, 0]
+        m_meas_arr = PAN_lkl[:, 1]
+        change_arr = LumMod(ma, ga, z_arr, h=h0, OmL=OmL, **kwargs_local)
+        muLCDM_vec = np.vectorize(muLCDM)
+        muLCDM_arr = muLCDM_vec(z_arr, h0, OmL)
 
-        change = LumMod(ma, ga, z, h=h0, OmL=OmL, **kwargs)
+        residuals = muLCDM_arr - m_meas_arr + [M0]*len(z_arr) - change_arr
 
-        residuals.append(muLCDM(z, h0, OmL) - m_meas + M0 - change)
+    else:
+        residuals = []
+        for rec in PAN_lkl:
+            z = rec[0]
+            m_meas = rec[1]
+
+            change = LumMod(ma, ga, z, h=h0, OmL=OmL, **kwargs)
+
+            residuals.append(muLCDM(z, h0, OmL) - m_meas + M0 - change)
 
     L_residuals = la.solve_triangular(
         PAN_cov, residuals, lower=True, check_finite=False)

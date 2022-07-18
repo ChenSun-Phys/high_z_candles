@@ -33,7 +33,7 @@ rsdrag_sig = 0.26
 #
 # Pantheon SNe
 #
-use_Pantheon = False
+use_Pantheon = True
 Pantheon_lkl = lcparam_full_long.dat
 Pantheon_covmat = sys_full_long.dat
 Pantheon_subset = 1048
@@ -52,6 +52,7 @@ omega_X [eV] = 2000
 quasars_vectorize = True
 quasars_z_low = 0.
 quasars_z_up = 100.
+quasars_delta = 0.15
 
 
 #
@@ -139,7 +140,7 @@ h0        = [  0.73,   0.6,  0.8,   0.02]
 logma	  = [   -14,   -17,  -11,     0.]
 # logga	  = [   -15,  -18.,  -8.,      1]
 logga	  = [   -17,  -18.,  -8.,     0.]
-# M0 	  = [ -19.3,   -21,  -18,    0.1]
+M0 	  = [ -19.3,   -21,  -18,    0.1]
 # rs	  = [147.78,  120., 160.,     1.]
 qso_gamma = [   0.7,   0.1,  1.0,    0.2]
 qso_beta  = [    5.,    0.,  10.,    0.3]
