@@ -35,9 +35,10 @@ _1_over_cm_eV_ = 1.9732698045930252e-5  # [1/cm/eV]
 #     return res
 
 
-def H_at_z(z, h0, a2, a3, unit='Mpc'):
-    """
-    Hubble at z 
+def H_at_z_naturallog(z, h0, a2, a3, unit='Mpc'):
+    """Hubble at z expanded with powers of ln(1+z).Rederived by hand for crosscheck. The conversion to 10 based expansion is 
+    a2_naturalbase = a2_10base/ln(10), 
+    a3_naturalbase = a2_10base/ln(10)**2.
 
     :param z: redshift
     :param h0:  H in [100*km/s/Mpc]
@@ -56,6 +57,27 @@ def H_at_z(z, h0, a2, a3, unit='Mpc'):
     return res
 
 
+def H_at_z(z, h0, a2, a3, unit='Mpc'):
+    """Hubble at z expanded with powers of log10(1+z)
+
+    :param z: redshift
+    :param h0:  H in [100*km/s/Mpc]
+    :param a2: the second coefficient of the log10(1+z) expansion
+    :param a3: the third coefficient of the log10(1+z) expansion
+    :param unit: flag to change the output unit
+    :returns: H [1/Mpc] by default, or H [km/s/Mpc]
+
+    """
+    x = np.log10(1.+z)
+    shape = -(1+z)**2/(-1+x*(-2.*a2-3.*a3*x+(1.+x*(a2+a3*x))*np.log(10)))
+    if unit == 'Mpc':
+        res = shape*(h0*100/(_c_/1000.))
+    else:
+        # unit of (km/s)/Mpc
+        res = shape*(h0*100.)
+    return res
+
+
 def dL_at_z(z, h0, a2, a3):
     """compute the luminosity distance, return in Mpc
 
@@ -65,8 +87,8 @@ def dL_at_z(z, h0, a2, a3):
     :param a3: the third coefficient of the log(1+z) expansion
 
     """
-    x = np.log(1.+z)
-    res = _c_/(h0*100.*1000.)*(x + a2*x**2 + a3*x**3)
+    x = np.log10(1.+z)
+    res = np.log(10)*(_c_/1000.)/(h0*100.)*(x + a2*x**2 + a3*x**3)
     return res
 
 

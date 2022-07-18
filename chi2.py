@@ -216,6 +216,10 @@ def chi2_quasars(x, data=None, vectorize=True, full_output=False, **kwargs):
             (0.6*qso_dlogf2500_arr)**2 + (qso_dlogf2keV_low_arr + qso_dlogf2keV_up_arr)**2/4 + 0.15**2)
         # Note: add in intrinsic scattering 0.15
 
+        #print(mu_th_arr - mu_exp_arr)
+        # print(mu_th_arr)
+        # print(mu_exp_arr)
+        # print(sigma_arr)
         chi2 = np.sum((mu_th_arr - mu_exp_arr)**2/sigma_arr**2)
 
     else:
@@ -256,7 +260,8 @@ def chi2_quasars(x, data=None, vectorize=True, full_output=False, **kwargs):
             # get the 1 sigma std deviation
             # using the symmetric error for now
             sigma = np.sqrt(
-                (0.6*qso_dlogf2500_arr[i])**2 + (qso_dlogf2keV_low_arr[i] + qso_dlogf2keV_up_arr[i])**2/4)
+                (0.6*qso_dlogf2500_arr[i])**2 + (qso_dlogf2keV_low_arr[i] + qso_dlogf2keV_up_arr[i])**2/4 + 0.15**2)
+            # added in the intrinsic scattering 0.15
 
             chi2 += (mu_th - mu_exp)**2/sigma**2
 
