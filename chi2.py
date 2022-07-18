@@ -213,7 +213,8 @@ def chi2_quasars(x, data=None, vectorize=True, full_output=False, **kwargs):
         # when computing the sigma error, assuming gamma to be 0.6 for logf2500
         # change on top of gamma=0.6 is of higher order
         sigma_arr = np.sqrt(
-            (0.6*qso_dlogf2500_arr)**2 + (qso_dlogf2keV_low_arr + qso_dlogf2keV_up_arr)**2/4)
+            (0.6*qso_dlogf2500_arr)**2 + (qso_dlogf2keV_low_arr + qso_dlogf2keV_up_arr)**2/4 + 0.15**2)
+        # Note: add in intrinsic scattering 0.15
 
         chi2 = np.sum((mu_th_arr - mu_exp_arr)**2/sigma_arr**2)
 
