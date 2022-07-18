@@ -103,6 +103,8 @@ if __name__ == '__main__':
         labels.append(r"$\gamma$")
     if 'qso_beta' in keys:
         labels.append(r"$\beta$")
+    if 'qso_delta' in keys:
+        labels.append(r"$\delta$")
 
     figure = corner.corner(samples,
                            labels=labels,
