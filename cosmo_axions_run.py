@@ -775,7 +775,7 @@ if __name__ == '__main__':
     # the names and types of the blobs
     dtype = [(exper, float) for exper in experiments]
 
-    flgmulti = True
+    flgmulti = True  #
     try:
         from multiprocessing import Pool
     except:

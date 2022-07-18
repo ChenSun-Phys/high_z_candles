@@ -101,7 +101,7 @@ def dA_at_z(z, h0, a2, a3):
 def muLCDM(z, h0, a2, a3):
     """distance modulus defined as 5*log10(DL/10pc)
     """
-    res = 5.*np.log10(dL_at_z*1.e5)
+    res = 5.*np.log10(dL_at_z(z, h0, a2, a3)*1.e5)
     return res
 
 

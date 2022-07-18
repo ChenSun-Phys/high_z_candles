@@ -340,7 +340,8 @@ def chi2_Pantheon(x, data=None, **kwargs):
         z = rec[0]
         m_meas = rec[1]
 
-        change = LumMod(ma, ga, z, h0=h0, a2=a2, a3=a3, **kwargs)
+        # change = LumMod(ma, ga, z, h0=h0, a2=a2, a3=a3, **kwargs)
+        change = 0.  # FIXME: only used for testing LCDM
 
         residuals.append(muLCDM(z, h0=h0, a2=a2, a3=a3) - m_meas + M0 - change)
 
