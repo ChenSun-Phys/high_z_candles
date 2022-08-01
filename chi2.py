@@ -60,96 +60,96 @@ def chi2_SH0ES(M0, data=None):
     return chi2
 
 
-def chi2_quasars_dist_mod(x, data=None, vectorize=True, full_output=False, **kwargs):
-    """
-    Computes quasars chi2 usign distance modulus. Note that this chi2 is only for testing purpose, as it uses the distance modulus given direclty in the data set of Lusso2020.
-    x is the theory point that contains
-        (ma, ga, a2, a3, qso_gamma, qso_beta)
-    Data must load with distance mod (get_dm=True) flag in load_quasars(). 
-    **kwargs are the arguments for LumMod.
+# def chi2_quasars_dist_mod(x, data=None, vectorize=True, full_output=False, **kwargs):
+#     """
+#     Computes quasars chi2 usign distance modulus. Note that this chi2 is only for testing purpose, as it uses the distance modulus given direclty in the data set of Lusso2020. This doesn't take into account the intrinsic scattering either.
+#     """
+
+#     # theory point
+#     (ma, ga, OmL, h0, qso_gamma, qso_beta) = x
+
+#     # Anchor_SN, _, Anchor_Ceph, _, _, Anchor_Msig, _, _ = data
+#     (qso_name_arr,
+#      qso_z_arr,
+#      qso_logf2500_arr,
+#      qso_dlogf2500_arr,
+#      qso_logf2keV_arr,
+#      qso_dlogf2keV_low_arr,
+#      qso_dlogf2keV_up_arr,
+#      qso_Gamma_arr,
+#      qso_dist_mod_arr,
+#      qso_ddist_mod_arr) = data
+
+#     chi2 = 0.
+
+#     kwargs_local = kwargs.copy()
+#     omega_X = kwargs_local.pop('omega_X')
+#     omega_UV = kwargs_local.pop('omega_UV')
+
+#     if vectorize:
+
+#         # LumMod_vec = np.vectorize(LumMod)
+#         kwargs_local['method'] = 'vectorize'
+#         tau_at_z_vec = np.vectorize(tau_at_z)
+
+#         logPggX_arr = 1/2.5*LumMod(ma=ma,
+#                                    g=ga,
+#                                    z=qso_z_arr,
+#                                    h=h0,
+#                                    OmL=OmL,
+#                                    omega=omega_X,
+#                                    **kwargs_local)
+
+#         logPggUV_arr = 1/2.5*LumMod(ma=ma,
+#                                     g=ga,
+#                                     z=qso_z_arr,
+#                                     h=h0,
+#                                     OmL=OmL,
+#                                     omega=omega_UV,
+#                                     **kwargs_local)
+#         # print(np.sum(np.abs(logPggX_arr)))
+#         # print(np.sum(np.abs(logPggUV_arr)))
+#         DL_arr = tau_at_z_vec(qso_z_arr, h0, OmL) * \
+#             (1.+qso_z_arr) * _Mpc_over_10pc_  # [10 pc]
+#         mu_th_arr = 5.*np.log10(DL_arr)
+#         # print("mu_th_arr:", mu_th_arr)
+#         # print(np.sum(np.abs(mu_th_arr)))
+
+#         # get the measurement
+#         mu_exp_arr = qso_dist_mod_arr
+
+#         # get the 1 sigma std deviation
+#         sigma_arr = qso_ddist_mod_arr
+
+#         chi2 = np.sum((mu_th_arr - mu_exp_arr)**2/sigma_arr**2)
+
+#     else:
+#         raise Exception('Only vectorize is implemented for now.')
+
+#     if full_output and vectorize:
+#         # used for debugging to plot out the data and the theory
+#         return chi2, mu_th_arr, mu_exp_arr, sigma_arr, qso_z_arr
+#     else:
+#         return chi2
+
+
+def chi2_quasars(x,
+                 data=None,
+                 vectorize=True,
+                 full_output=False,
+                 # quasars_delta=None,
+                 **kwargs):
+    """Computes quasars chi2.     **kwargs contain the arguments for LumMod. 
+
+    :param x: the theory point that contains (ma, ga, OmL, h0, qso_gamma, qso_beta)
+    :param data: must be have certain structures. See source code for the structure needed. 
+    :param vectorize: whether to vectorize the computation
+    :param full_output: whether to output other quantities besides chi2, useful for testing. 
+
     """
 
     # theory point
-    (ma, ga, h0, a2, a3, qso_gamma, qso_beta) = x
-
-    # Anchor_SN, _, Anchor_Ceph, _, _, Anchor_Msig, _, _ = data
-    (qso_name_arr,
-     qso_z_arr,
-     qso_logf2500_arr,
-     qso_dlogf2500_arr,
-     qso_logf2keV_arr,
-     qso_dlogf2keV_low_arr,
-     qso_dlogf2keV_up_arr,
-     qso_Gamma_arr,
-     qso_dist_mod_arr,
-     qso_ddist_mod_arr) = data
-
-    chi2 = 0.
-
-    kwargs_local = kwargs.copy()
-    omega_X = kwargs_local.pop('omega_X')
-    omega_UV = kwargs_local.pop('omega_UV')
-
-    if vectorize:
-
-        # LumMod_vec = np.vectorize(LumMod)
-        kwargs_local['method'] = 'vectorize'
-        tau_at_z_vec = np.vectorize(tau_at_z)
-
-        logPggX_arr = 1/2.5*LumMod(ma=ma,
-                                   g=ga,
-                                   z=qso_z_arr,
-                                   h0=h0,
-                                   a3=a3,
-                                   a2=a2,
-                                   omega=omega_X,
-                                   **kwargs_local)
-
-        logPggUV_arr = 1/2.5*LumMod(ma=ma,
-                                    g=ga,
-                                    z=qso_z_arr,
-                                    h0=h0,
-                                    a3=a3,
-                                    a2=a2,
-                                    omega=omega_UV,
-                                    **kwargs_local)
-        # print(np.sum(np.abs(logPggX_arr)))
-        # print(np.sum(np.abs(logPggUV_arr)))
-        DL_arr = tau_at_z_vec(qso_z_arr, h0=h0, a2=a2, a3=a3) * \
-            (1.+qso_z_arr) * _Mpc_over_10pc_  # [10 pc]
-        mu_th_arr = 5.*np.log10(DL_arr)
-        # print("mu_th_arr:", mu_th_arr)
-        # print(np.sum(np.abs(mu_th_arr)))
-
-        # get the measurement
-        mu_exp_arr = qso_dist_mod_arr
-
-        # get the 1 sigma std deviation
-        sigma_arr = qso_ddist_mod_arr
-
-        chi2 = np.sum((mu_th_arr - mu_exp_arr)**2/sigma_arr**2)
-
-    else:
-        raise Exception('Only vectorize is implemented for now.')
-
-    if full_output and vectorize:
-        # used for debugging to plot out the data and the theory
-        return chi2, mu_th_arr, mu_exp_arr, sigma_arr, qso_z_arr
-    else:
-        return chi2
-
-
-def chi2_quasars(x, data=None, vectorize=True, full_output=False, **kwargs):
-    """
-    Computes quasars chi2. 
-    x is the theory point that contains
-        (ma, ga, h0, a2, a3, qso_gamma, qso_beta)
-    Data must be have certain structures. See source code for the structure needed. 
-    **kwargs are the arguments for LumMod.
-    """
-
-    # theory point
-    (ma, ga, h0, a2, a3, qso_gamma, qso_beta) = x
+    (ma, ga, h0, a2, a3, qso_gamma, qso_beta, qso_delta) = x
 
     # Anchor_SN, _, Anchor_Ceph, _, _, Anchor_Msig, _, _ = data
     (qso_name_arr,
@@ -197,6 +197,7 @@ def chi2_quasars(x, data=None, vectorize=True, full_output=False, **kwargs):
             (1.+qso_z_arr) * _Mpc_over_cm_  # [cm]
         mu_th_arr = 2.*(qso_gamma-1)*log10(DL_arr) + qso_beta + \
             (qso_gamma-1)*log10(4.*np.pi)
+        # note that axion-induced conversion is killed for testing LCDM
         # mu_th_arr = 2.*(qso_gamma-1)*log10(DL_arr) + logPggX_arr - \
         #     qso_gamma*logPggUV_arr + qso_beta + \
         #     (qso_gamma-1)*log10(4.*np.pi)  # FIXME
@@ -213,14 +214,11 @@ def chi2_quasars(x, data=None, vectorize=True, full_output=False, **kwargs):
         # when computing the sigma error, assuming gamma to be 0.6 for logf2500
         # change on top of gamma=0.6 is of higher order
         sigma_arr = np.sqrt(
-            (0.6*qso_dlogf2500_arr)**2 + (qso_dlogf2keV_low_arr + qso_dlogf2keV_up_arr)**2/4 + 0.15**2)
-        # Note: add in intrinsic scattering 0.15
+            (0.6*qso_dlogf2500_arr)**2 + (qso_dlogf2keV_low_arr + qso_dlogf2keV_up_arr)**2/4 + qso_delta**2)  # intrinsic scattering added here
 
-        #print(mu_th_arr - mu_exp_arr)
-        # print(mu_th_arr)
-        # print(mu_exp_arr)
-        # print(sigma_arr)
-        chi2 = np.sum((mu_th_arr - mu_exp_arr)**2/sigma_arr**2)
+        chi2 = np.sum((mu_th_arr - mu_exp_arr)**2/sigma_arr**2
+                      + np.log(sigma_arr))
+        # added the log term, relevant when delta is a nuisance parameter
 
     else:
 
@@ -260,10 +258,9 @@ def chi2_quasars(x, data=None, vectorize=True, full_output=False, **kwargs):
             # get the 1 sigma std deviation
             # using the symmetric error for now
             sigma = np.sqrt(
-                (0.6*qso_dlogf2500_arr[i])**2 + (qso_dlogf2keV_low_arr[i] + qso_dlogf2keV_up_arr[i])**2/4 + 0.15**2)
-            # added in the intrinsic scattering 0.15
+                (0.6*qso_dlogf2500_arr[i])**2 + (qso_dlogf2keV_low_arr[i] + qso_dlogf2keV_up_arr[i])**2/4 + qso_delta**2)
 
-            chi2 += (mu_th - mu_exp)**2/sigma**2
+            chi2 += (mu_th - mu_exp)**2/sigma**2 + np.log(sigma)
 
     if full_output and vectorize:
         # used for debugging to plot out the data and the theory
@@ -483,6 +480,7 @@ def lnprob(x,
     if use_quasars:
         qso_gamma = current_point['qso_gamma']
         qso_beta = current_point['qso_beta']
+        qso_delta = current_point['qso_delta']
     if use_BOSSDR12:
         rs = current_point['rs']
 
@@ -519,7 +517,7 @@ def lnprob(x,
         if use_quasars:
 
             this_chi2 = chi2_quasars(
-                (ma, ga, h0, a2, a3, qso_gamma, qso_beta), data=quasars_data, **quasars_kwargs)
+                (ma, ga, h0, a2, a3, qso_gamma, qso_beta, qso_delta), data=quasars_data, **quasars_kwargs)
             chi2 += this_chi2
             lnprob_each_chi2.append(this_chi2)
 
