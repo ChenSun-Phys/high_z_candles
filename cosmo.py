@@ -35,6 +35,24 @@ _1_over_cm_eV_ = 1.9732698045930252e-5  # [1/cm/eV]
 #     return res
 
 
+def H_at_z_exact(z, h0, OmL, unit='Mpc'):
+    """
+    Hubble at z 
+
+    :param z: redshift
+    :param h0:  H in [100*km/s/Mpc]
+    :param OmL: Omega_Lambda
+    :param unit: flag to change the output unit
+    :returns: H [1/Mpc] by default, or H [km/s/Mpc]
+
+    """
+    if unit == 'Mpc':
+        res = h0*100.*sqrt(OmL + (1 - OmL) * (1 + z)**3)/(_c_/1000.)
+    else:
+        res = h0*100.*sqrt(OmL + (1 - OmL) * (1 + z)**3)
+    return res
+
+
 def H_at_z_naturallog(z, h0, a2, a3, unit='Mpc'):
     """Hubble at z expanded with powers of ln(1+z).Rederived by hand for crosscheck. The conversion to 10 based expansion is 
     a2_naturalbase = a2_10base/ln(10), 
@@ -54,6 +72,27 @@ def H_at_z_naturallog(z, h0, a2, a3, unit='Mpc'):
         res = h0*100.*shape/(_c_/1000.)
     else:
         res = h0*100.*shape
+    return res
+
+
+def H_at_z_cross_check(z, h0, a2, a3, unit='Mpc'):
+    """Hubble at z expanded with powers of log10(1+z)
+
+    :param z: redshift
+    :param h0:  H in [100*km/s/Mpc]
+    :param a2: the second coefficient of the log10(1+z) expansion
+    :param a3: the third coefficient of the log10(1+z) expansion
+    :param unit: flag to change the output unit
+    :returns: H [1/Mpc] by default, or H [km/s/Mpc]
+
+    """
+    shape = -(1.+z)**2*np.log(10)**2/(-np.log(10)**2+np.log(10)*(-2.*a2+np.log(10))
+                                      * np.log(1+z)+(-3.*a3+a2*np.log(10))*np.log(1+z)**2+a3*np.log(1.+z)**3)
+    if unit == 'Mpc':
+        res = shape*(h0*100/(_c_/1000.))
+    else:
+        # unit of (km/s)/Mpc
+        res = shape*(h0*100.)
     return res
 
 
@@ -105,6 +144,30 @@ def tau_at_z(z, h0, a2, a3):
     :param a3: the third coefficient of the log(1+z) expansion
     """
     res = dL_at_z(z, h0, a2, a3)/(1.+z)
+    return res
+
+
+def tau_at_z_exact(z, h0, OmL):
+    """
+    Compute the comoving distance, return in Mpc
+
+    Parameters
+    ----------
+    z : scalar
+        redshift
+    h0 : scalar
+        Hubble in 100 km/s/Mpc
+    OmL : scalar
+        Omega_Lambda
+
+    """
+    try:
+        res, _ = quad(lambda zp: 1. / sqrt(OmL +
+                                           (1 - OmL) * (1 + zp)**3), 0., z)
+    except Warning:
+        print('OmL=%e, z=%e' % (OmL, z))
+        raise Exception
+    res = res * _c_/1e5/h0
     return res
 
 
