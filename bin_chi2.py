@@ -63,7 +63,7 @@ if __name__ == '__main__':
 
     f = f['mcmc']
     keys = f.keys()
-    print keys
+    print(keys)
 
     #idx = np.random.randint(100)
     # print f['chain'][idx,0], -2*f['log_prob'][idx,0], f['blobs']['pantheon'][idx,0]
@@ -104,11 +104,12 @@ if __name__ == '__main__':
         chi2_tot[np.where(chain_ga < 0)]), chi2_tot[np.where(chain_ga < 0)].argmin()
     # the sum of the chi2 from each experiment at the best fit point
     # the experiments' chi2s for each point
+    print('experiments:', experiments)
+    print('bf_chi2:', bf_chi2, 'bf_idx:', bf_idx)
     each_chi2 = {
         exper: blobs[exper].reshape(-1)[np.where(chain_ga < 0)] for exper in experiments}
     chi2_arr = [each_chi2[exper][bf_idx] for exper in experiments]
     each_sum = sum(chi2_arr)
-
     print("Each chi2:", chi2_arr)
     print("chi2 best fit: {} = {}".format(bf_chi2, each_sum))  # sanity check
 
@@ -135,7 +136,7 @@ if __name__ == '__main__':
                                     & (chain_ma > edges_ma[j])
                                     & (chain_ma < edges_ma[j+1]))
 
-            # print wheres[i,j]
+            print('block size:', len(wheres[i, j][0]))
 
             # the chi2s in that bin
             chi2_block = chi2_tot[wheres[i, j]]
@@ -144,6 +145,7 @@ if __name__ == '__main__':
             if len(chi2_block) > 0:
 
                 this_min_chi2 = min(chi2_block)  # the minimum chi2 of this bin
+                print('this_min_chi2:', this_min_chi2)
 
                 # appending to the list
                 chi2_mins.append(this_min_chi2)
@@ -175,8 +177,8 @@ if __name__ == '__main__':
     plt.figure(101)
     plt.xlabel(r'$\log_{10} m_a$')
     plt.ylabel(r'$\log_{10} g_a$')
-    plt.xlim(-17., -11.)
-    plt.ylim(-13., -8.)
+    # plt.xlim(-17., -11.)
+    # plt.ylim(-13., -8.)
     plt.title(r'$\Delta \chi^2$ contours')
 
     ma_arr = np.linspace(edges_ma[0], edges_ma[-1], 101)
@@ -212,7 +214,7 @@ def analyze(directory, flg_debug=False):
 
     f = f['mcmc']
     keys = f.keys()
-    print keys
+    print(keys)
 
     #idx = np.random.randint(100)
     # print f['chain'][idx,0], -2*f['log_prob'][idx,0], f['blobs']['pantheon'][idx,0]
