@@ -583,6 +583,7 @@ if __name__ == '__main__':
 ##########################
 
     experiments = []  # a list of shorthand names for the experiments
+    # Note the following order needs to match with chi2.py inside lnprob()
 
     # load SH0ES
     if params['use_SH0ES'] is True:
@@ -594,16 +595,6 @@ if __name__ == '__main__':
     else:
         shoes_data = None
 
-    # load quasars
-    if params['use_quasars'] is True:
-        quasars_data = data.load_quasars(dir_lkl,
-                                         params['quasars_lkl'],
-                                         z_low=quasars_z_low,
-                                         z_up=quasars_z_up)
-        experiments.append('quasars')
-    else:
-        quasars_data = None
-
     # load Pantheon
     if params['use_Pantheon'] is True:
         pan_data = data.load_pantheon(dir_lkl,
@@ -614,6 +605,16 @@ if __name__ == '__main__':
         experiments.append('pantheon')
     else:
         pan_data = None
+
+    # load quasars
+    if params['use_quasars'] is True:
+        quasars_data = data.load_quasars(dir_lkl,
+                                         params['quasars_lkl'],
+                                         z_low=quasars_z_low,
+                                         z_up=quasars_z_up)
+        experiments.append('quasars')
+    else:
+        quasars_data = None
 
     # load BOSS DR12
     if params['use_BOSSDR12'] is True:
