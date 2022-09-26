@@ -44,7 +44,7 @@ omegaSN [eV] = 1.
 #
 # quasars
 #
-use_quasars = True
+use_quasars = False
 quasars_lkl = quasars_Lusso2020.txt
 # SNe photon energy
 omega_UV [eV] = 4.96
@@ -73,13 +73,13 @@ BAOlowz_lkl = bao_smallz_2014.txt
 #
 # Bonamente et al. cluster data
 #
-use_clusters = False
+use_clusters = True
 wanna_correct = True
 # clusters SZ & X-ray photon energies
 omegaX [keV] = 5.
 omegaCMB [eV] = 2.4e-4
 # whether we use ICM effect
-ICM_effect = True
+ICM_effect = False
 
 ###################
 #       IGM       #
@@ -100,33 +100,33 @@ B_IGM [nG] = 1.
 s_IGM [Mpc] = 1.
 ne_IGM [1/cm3] = 1.6e-8
 
-###################
-#       ICM       #
-###################
-#
-# ICM flags
-#
-smoothed_ICM = False
-method_ICM = product
-# prob_func_ICM = norm_log
-# Nr_ICM = 501
-return_arrays = True
-los_use_prepared_arrays = True
-los_method = quad
-# los_Nr = 501
+# ###################
+# #       ICM       #
+# ###################
+# #
+# # ICM flags
+# #
+# smoothed_ICM = False
+# method_ICM = product
+# # prob_func_ICM = norm_log
+# # Nr_ICM = 501
+# return_arrays = True
+# los_use_prepared_arrays = True
+# los_method = quad
+# # los_Nr = 501
 
-#
-# ICM properties
-#
-R_vir [Mpc] = 1.8
-L_ICM [kpc] = 6.08
+# #
+# # ICM properties
+# #
+# R_vir [Mpc] = 1.8
+# L_ICM [kpc] = 6.08
 
-ICM_magnetic_model = A
-# ICM_magnetic_model = custom
-# r_low [kpc] = 0.
-# B_ref [muG] = 10.
-# r_ref [kpc] = 0.
-# eta = 0.5
+# ICM_magnetic_model = A
+# # ICM_magnetic_model = custom
+# # r_low [kpc] = 0.
+# # B_ref [muG] = 10.
+# # r_ref [kpc] = 0.
+# # eta = 0.5
 
 ###################
 #    parameters   #
@@ -141,12 +141,19 @@ logga	  = [   -14,  -18.,  -8.,    1.0]
 # logga	  = [   -10,  -14.,  -8.,    0.3]
 M0 	  = [ -19.3,   -21,  -18,    0.1]
 rs	  = [147.78,  120., 160.,     1.]
-qso_gamma = [   0.7,   0.1,  1.0,   0.07]
-qso_beta  = [    5.,    0.,  10.,    0.3]
-qso_delta = [   0.3,  0.05,  0.6,   0.05]
+# qso_gamma = [   0.7,   0.1,  1.0,   0.07]
+# qso_beta  = [    5.,    0.,  10.,    0.3]
+# qso_delta = [   0.3,  0.05,  0.6,   0.05]
 
 #
 # Miscellaneous
 #
+
+# whether to use chi2 or log(likelihood)
+# for quasars one must use the latter since the scattering needs to be fitted
+# for other data sets it can be either. If commented out, it defaults to True.
+use_loglkl = False
+
+# verbosity of output
 verbose = 2
 # debug = True

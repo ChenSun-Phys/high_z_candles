@@ -57,9 +57,10 @@ def chi2_SH0ES(M0, data=None):
     for i in range(len(Anchor_SN)):
         chi2 += (Anchor_SN[i] - M0 - Anchor_Ceph[i])**2 / Anchor_Msig[i]**2
 
-        # note this is no longer chi2. It's -2(log(lkl))
-        # so it can be combined with quasars
-        chi2 += np.log(2.*np.pi) + 2.*np.log(Anchor_Msig[i])
+        if use_loglkl:
+            # note this is no longer chi2. It's -2(log(lkl))
+            # so it can be combined with quasars
+            chi2 += np.log(2.*np.pi) + 2.*np.log(Anchor_Msig[i])
 
     return chi2
 
@@ -151,6 +152,10 @@ def chi2_quasars(x,
     :param full_output: whether to output other quantities besides chi2, useful for testing. 
 
     """
+
+    if not use_loglkl:
+        raise Exception(
+            'You asked for chi2 but quasars have to use log(likelihood) since qso_delta makes it otherwise unbounded')
 
     # theory point
     (ma, ga, OmL, h0, qso_gamma, qso_beta, qso_delta) = x
@@ -297,9 +302,10 @@ def chi2_BOSSDR12(x, data=None):
 
     chi2 += np.dot(np.dot(data_array, BOSS_icov), data_array)
 
-    # note this is no longer chi2. It's -2(log(lkl))
-    # so it can be combined with quasars
-    chi2 += BOSS_cov_logdet + len(data_array) * np.log(2.*np.pi)
+    if use_loglkl:
+        # note this is no longer chi2. It's -2(log(lkl))
+        # so it can be combined with quasars
+        chi2 += BOSS_cov_logdet + len(data_array) * np.log(2.*np.pi)
 
     return chi2
 
@@ -324,9 +330,10 @@ def chi2_BAOlowz(x, data=None):
             theo = rs / dv
         chi2 += ((theo - BAOlowz_meas_rs_dV[i]) / BAOlowz_meas_sigma[i]) ** 2
 
-        # note this is no longer chi2. It's -2(log(lkl))
-        # so it can be combined with quasars
-        chi2 += np.log(2.*np.pi) + 2.*np.log(BAOlowz_meas_sigma[i])
+        if use_loglkl:
+            # note this is no longer chi2. It's -2(log(lkl))
+            # so it can be combined with quasars
+            chi2 += np.log(2.*np.pi) + np.log(BAOlowz_meas_sigma[i]**2)
 
     return chi2
 
@@ -370,9 +377,10 @@ def chi2_Pantheon(x, data=None, vectorize=True, **kwargs):
         PAN_cov_sqrt, residuals, lower=True, check_finite=False)
     chi2 = np.dot(L_residuals, L_residuals)
 
-    # note this is no longer chi2. It's -2(log(lkl))
-    # so it can be combined with quasars
-    chi2 += PAN_cov_logdet + np.log(2.*np.pi) * len(L_residuals)
+    if use_loglkl:
+        # note this is no longer chi2. It's -2(log(lkl))
+        # so it can be combined with quasars
+        chi2 += PAN_cov_logdet + np.log(2.*np.pi) * len(L_residuals)
 
     return chi2
 
@@ -389,9 +397,10 @@ def chi2_External(h0, data=None):
 
     chi2 += (h0 - h0_prior_mean)**2 / h0_prior_sig**2
 
-    # note this is no longer chi2. It's -2(log(lkl))
-    # so it can be combined with quasars
-    chi2 += np.log(2.*np.pi) + 2.*np.log(h0_prior_sig)
+    if use_loglkl:
+        # note this is no longer chi2. It's -2(log(lkl))
+        # so it can be combined with quasars
+        chi2 += np.log(2.*np.pi) + 2.*np.log(h0_prior_sig)
 
     return chi2
 
@@ -409,9 +418,10 @@ def chi2_early(rs, data=None):
 
     chi2 += (rs - rsdrag_prior_mean)**2 / rsdrag_prior_sig**2
 
-    # note this is no longer chi2. It's -2(log(lkl))
-    # so it can be combined with quasars
-    chi2 += np.log(2.*np.pi) + 2.*np.log(rsdrag_prior_sig)
+    if use_loglkl:
+        # note this is no longer chi2. It's -2(log(lkl))
+        # so it can be combined with quasars
+        chi2 += np.log(2.*np.pi) + 2.*np.log(rsdrag_prior_sig)
 
     return chi2
 
@@ -470,9 +480,10 @@ def chi2_clusters(pars, data=None, wanna_correct=True, fixed_Rvir=False, **kwarg
 
     terms = ((residuals / err_cls)**2.)*correction
 
-    # note this is no longer chi2. It's -2(log(lkl))
-    # so it can be combined with quasars. Symmetric err bar is used here
-    terms = terms + np.log(2.*np.pi) + np.log(err_cls**2)
+    if use_loglkl:
+        # note this is no longer chi2. It's -2(log(lkl))
+        # so it can be combined with quasars. Symmetric err bar is used here
+        terms = terms + np.log(2.*np.pi) + np.log(err_cls**2)
 
     chi2 = terms.sum()
 
@@ -503,6 +514,9 @@ def lnprob(x,
         current_point[keys[ii]] = x[ii]
     for key in keys_fixed:
         current_point[key] = params[key+' fixed']
+
+    global use_loglkl
+    use_loglkl = params['use_loglkl']
 
     ma = 10**current_point['logma']
     ga = 10**current_point['logga']

@@ -77,6 +77,12 @@ def dir_init(path):
 
 
 def fill_mcmc_parameters(path):
+    """The main routine that parses the param file
+
+    :param path: the path to the param file
+
+    """
+
     res = od()
     keys = []
     fixed_keys = []
@@ -92,9 +98,6 @@ def fill_mcmc_parameters(path):
                 try:
                     res[key] = float(words[1])
                 except:
-
-                    # print line, words, key
-
                     res[key] = (words[1]).strip()
                     # not a number, start parsing
                     # store tuple
@@ -113,6 +116,8 @@ def fill_mcmc_parameters(path):
                         else:
                             res[key+' fixed'] = res[key][0]
                             fixed_keys.append(str(key))
+
+                    # booleans get treated separately
                     elif res[key] == 'TRUE' or res[key] == 'True' or res[key] == 'true' or res[key] == 'T' or res[key] == 'yes' or res[key] == 'Y' or res[key] == 'Yes' or res[key] == 'YES':
                         res[key] = True
 
@@ -179,6 +184,17 @@ if __name__ == '__main__':
         copyfile(path_of_param, os.path.join(directory, 'log.param'))
 
     # fill up defaults
+    try:
+        params['use_loglkl']
+    except KeyError:
+        params['use_loglkl'] = True
+
+    # global use_loglkl
+    # if params['use_loglkl']:
+    #     use_loglkl = True
+    # else:
+    #     use_loglkl = False
+
     try:
         params['debug']
     except KeyError:
@@ -715,7 +731,6 @@ if __name__ == '__main__':
 ##########################
 # emcee related deployment
 ##########################
-
 
     def lnprob(x):
         """

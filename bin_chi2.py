@@ -106,7 +106,8 @@ if __name__ == '__main__':
     pts = np.array(f['chain'])  # the points
     print("pts shape is:", pts.shape)
     # make sure to reshape according to the number of param
-    pts = pts.reshape(-1, 9)
+    # pts = pts.reshape(-1, 9)
+    pts = pts.reshape(-1, 6)
 
     chi2_tot = np.array(f['log_prob'])
     print("chi2_tot shape is:", chi2_tot.shape)
