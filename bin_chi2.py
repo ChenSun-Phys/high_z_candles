@@ -4,13 +4,6 @@
 ###               and Chen Sun, 2020, 2022          ###
 #######################################################
 
-try:
-    import matplotlib
-    matplotlib.use('Agg')
-    import matplotlib.pyplot as plt
-    from datetime import datetime
-except:
-    pass
 
 import os
 import errno
@@ -36,7 +29,7 @@ def parse(directory, chain_name, directory2=None, chain2_name=None, bins=25):
     :param directory2: directory of the second chain, optional
     :param chain2_name: name of the second chain to be combined together, optional
     :param bins: number of bins
-    :returns: (bf_chi2, mesh_ma, mesh_ga, chi2_mins, idx_mins_global, ma_arr, ga_arr, delta_arr) for global best fit chi2, meshgrid of ma, meshgrid of ga, meshgrid of chi2 local minimum in each block, the corresponding global indices of the local chi2 minima, ma array, ga array, interpolated local chi2 minimum
+    :returns: (bf_chi2, ma_mesh, ga_mesh, chi2_mins, idx_mins_global, ma_arr, ga_arr, delta_arr) for global best fit chi2, meshgrid of ma, meshgrid of ga, meshgrid of chi2 local minimum in each block, the corresponding global indices of the local chi2 minima, ma array, ga array, interpolated local chi2 minimum
     :rtype: tuple of (scalar, 2D array, 2D array, 2D array, 2D array, 1D array, 1D array, 1D array)
 
     """
@@ -47,7 +40,7 @@ def parse(directory, chain_name, directory2=None, chain2_name=None, bins=25):
     f1 = h5py.File(path1, 'r')
     f1 = f1['mcmc']
 
-    if flgc2:
+    if directory2 is not None:
         # there are two chains provided
         path2 = os.path.join(directory2, chain2_name)
         f2 = h5py.File(path2, 'r')
@@ -83,16 +76,28 @@ def parse(directory, chain_name, directory2=None, chain2_name=None, bins=25):
     # # the best fit chi2 and where it is
 
     chain_ga = pts[:, 3]  # the values of ga
-    _, edges_ga = np.histogram(chain_ga, bins=bins)  # the edges of the bins
-    # chain_neg_ga = chain_ga[np.where(chain_ga < 0)]  # only negatives!
-    # _, edges_ga = np.histogram(
-    #     chain_neg_ga, bins=bins)  # the edges of the bins
+    # _, edges_ga = np.histogram(chain_ga, bins=bins+1)  # the edges of the bins
+    chain_neg_ga = chain_ga[np.where(chain_ga < 0)]  # only negatives!
+    _, edges_ga = np.histogram(
+        chain_neg_ga, bins=bins+1)  # the edges of the bins
+    print("edges_ga:", edges_ga)
+    print("chain_ga has the length of", len(chain_ga))
+    print("chain_neg_ga has the length of", len(chain_neg_ga))
 
     chain_ma = pts[:, 2]  # the values of ma
-    _, edges_ma = np.histogram(chain_ma, bins=bins)  # the edges of the bins
-    # chain_neg_ma = chain_ma[np.where(chain_ma < 0)]  # only negatives!
-    # _, edges_ma = np.histogram(
-    #     chain_neg_ma, bins=bins)  # the edges of the bins
+    # _, edges_ma = np.histogram(chain_ma, bins=bins)  # the edges of the bins
+    chain_neg_ma = chain_ma[np.where(chain_ma < 0)]  # only negatives!
+    _, edges_ma = np.histogram(
+        chain_neg_ma, bins=bins)  # the edges of the bins
+    print("edges_ma:", edges_ma)
+    print("chain_ma has the length of", len(chain_ma))
+    print("chain_neg_ma has the length of", len(chain_neg_ma))
+    # test
+    tmp1_arr = np.where(chain_ga == 0.)[0]
+    tmp2_arr = np.where(tmp1_arr > 3901099)[0]
+    print("len(tmp1_arr)", len(tmp1_arr))
+    print("len(tmp2_arr)", len(tmp2_arr))
+    print("the index of the zero", tmp1_arr)
 
     # the best fit chi2 and where it is
     # bf_chi2 = min(chi2_tot[np.where(chain_ga < 0)])
@@ -103,21 +108,22 @@ def parse(directory, chain_name, directory2=None, chain2_name=None, bins=25):
     # the sum of the chi2 from each experiment at the best fit point
     # the experiments' chi2s for each point
     print('experiments:', experiments)
-    print('bf_chi2:', bf_chi2, 'bf_idx:', bf_idx)
+    print('bf_m2loglkl:', bf_chi2, 'bf_idx:', bf_idx)
     each_chi2 = {
         exper: blobs[exper].reshape(-1) for exper in experiments}
     # each_chi2 = {
     #     exper: blobs[exper].reshape(-1)[np.where(chain_ga < 0)] for exper in experiments}
     chi2_arr = [each_chi2[exper][bf_idx] for exper in experiments]
     each_sum = sum(chi2_arr)
-    print("Each chi2:", chi2_arr)
-    print("chi2 best fit: {} = {}".format(bf_chi2, each_sum))  # sanity check
+    print("Each m2loglkl:", chi2_arr)
+    print("m2loglkl best fit: {} = {}".format(
+        bf_chi2, each_sum))  # sanity check
 
     # the center values
     block_ga = (edges_ga[:-1] + edges_ga[1:])/2.
     block_ma = (edges_ma[:-1] + edges_ma[1:])/2.
-    mesh_ga, mesh_ma = np.meshgrid(block_ga, block_ma, indexing='ij')
-    # mesh_ma, mesh_ga = np.meshgrid(block_ma, block_ga, indexing='ij')
+    # ga_mesh, ma_mesh = np.meshgrid(block_ga, block_ma, indexing='ij')
+    ma_mesh, ga_mesh = np.meshgrid(block_ma, block_ga, indexing='ij')
 
     # preparation for the computation of the chi2(ma, ga) function
 
@@ -133,10 +139,10 @@ def parse(directory, chain_name, directory2=None, chain2_name=None, bins=25):
         for j in (range(len(edges_ga)-1)):
 
             # those points with ga, ma values within the bin
-            wheres[i, j] = np.where((chain_ga > edges_ga[i])
-                                    & (chain_ga < edges_ga[i+1])
-                                    & (chain_ma > edges_ma[j])
-                                    & (chain_ma < edges_ma[j+1]))
+            wheres[i, j] = np.where((chain_ga > edges_ga[j])
+                                    & (chain_ga <= edges_ga[j+1])
+                                    & (chain_ma > edges_ma[i])
+                                    & (chain_ma <= edges_ma[i+1]))
 
             # print('ma=%.2g, ga=%.2g' % (edges_ma[j], edges_ga[i]))
             # print('(%d, %d) block size: %d' % (i, j, len(wheres[i, j][0])))
@@ -158,10 +164,11 @@ def parse(directory, chain_name, directory2=None, chain2_name=None, bins=25):
                     np.where(chi2_tot == this_min_chi2)[0][0])
                 # appending to the data
                 ma_ga_chi2.append(
-                    [mesh_ma[i, j], mesh_ga[i, j], this_min_chi2])
+                    [ma_mesh[i, j], ga_mesh[i, j], this_min_chi2])
 
             else:
                 chi2_mins.append(np.inf)
+                # chi2_mins.append(256)
                 idx_mins.append(-1)
                 idx_mins_global.append(-1)
 
@@ -172,10 +179,10 @@ def parse(directory, chain_name, directory2=None, chain2_name=None, bins=25):
     idx_mins = np.array(idx_mins, dtype=int)
     idx_mins_global = np.array(idx_mins_global, dtype=int)
 
-    chi2_mins = chi2_mins.reshape(mesh_ma.shape)
-    idx_mins = idx_mins.reshape(mesh_ma.shape)
-    idx_mins_global = idx_mins_global.reshape(mesh_ma.shape)
-    print(idx_mins_global)
+    chi2_mins = chi2_mins.reshape(ma_mesh.shape)
+    idx_mins = idx_mins.reshape(ma_mesh.shape)
+    idx_mins_global = idx_mins_global.reshape(ma_mesh.shape)
+    # print(idx_mins_global)
 
     ma_ga_chi2 = np.array(ma_ga_chi2)
 
@@ -190,10 +197,39 @@ def parse(directory, chain_name, directory2=None, chain2_name=None, bins=25):
     ga_gr, ma_gr = np.meshgrid(ga_arr, ma_arr, indexing='ij')
     delta_arr = delta_chi2(ma_gr, ga_gr)
 
-    return (bf_chi2, mesh_ma, mesh_ga, chi2_mins, idx_mins_global, ma_arr, ga_arr, delta_arr)
+    return (bf_chi2, ma_mesh, ga_mesh, chi2_mins, idx_mins_global, ma_arr, ga_arr, delta_arr, idx_mins_global, pts)
+
+
+def query(log10ma, log10ga, ma_mesh, ga_mesh, target_mesh):
+    """This function finds the minimum of the chi2 in the block that contains the point (ma, ga). 
+
+    :param log10ma: log10(mass of axion/eV)
+    :param log10ga: log10(axion-photon coupling/(1/GeV))
+    :param ma_mesh: the meshgrid of log10(ma)
+    :param ga_mesh: the meshgrid of log10(ga)
+    :param target_mesh: the target meshgrid to be checked. If it's the chi2_mesh, it outputs the minimal chi2 of the given box; if it's the global index mesh, it will output the index of the the minimal chi2 in the given box. 
+
+    """
+    ma_arr = ma_mesh[:, 0]
+    ga_arr = ga_mesh[0, :]
+
+    # find the block
+    ma_idx = np.searchsorted(ma_arr, log10ma)
+    ga_idx = np.searchsorted(ga_arr, log10ga)
+    print(ma_idx)
+    print(ga_idx)
+
+    return target_mesh[ma_idx, ga_idx]
 
 
 if __name__ == '__main__':
+    try:
+        import matplotlib
+        matplotlib.use('Agg')
+        import matplotlib.pyplot as plt
+        from datetime import datetime
+    except:
+        pass
 
     warnings.filterwarnings('error', 'overflow encountered')
     warnings.filterwarnings('error', 'invalid value encountered')
@@ -226,8 +262,8 @@ if __name__ == '__main__':
         raise Exception(help_msg)
     if flgc and flgc2:
         (bf_chi2,
-         mesh_ma,
-         mesh_ga,
+         ma_mesh,
+         ga_mesh,
          chi2_mins,
          idx_mins_global,
          ma_arr,
@@ -239,8 +275,8 @@ if __name__ == '__main__':
                             bins)
     if flgc and (not flgc2):
         (bf_chi2,
-         mesh_ma,
-         mesh_ga,
+         ma_mesh,
+         ga_mesh,
          chi2_mins,
          idx_mins_global,
          ma_arr,
@@ -273,9 +309,9 @@ if __name__ == '__main__':
     plt.title(r'$\Delta \chi^2$ contours')
 
     # the delta_chi2 1- and 2-sigma contours, both straight out of the data and interpolated
-    plt.contour(mesh_ma, mesh_ga, chi2_mins-bf_chi2,
+    plt.contour(ma_mesh, ga_mesh, chi2_mins-bf_chi2,
                 levels=[2.29141, 6.15823, 10, 100], colors=['b', 'r', 'C2', 'C3'])
-    # plt.contour(mesh_ma, mesh_ga, chi2_mins-bf_chi2,
+    # plt.contour(ma_mesh, ga_mesh, chi2_mins-bf_chi2,
     #             levels=[2.29141, 6.15823], colors=['b', 'r'])
     # the interpolation result
     plt.contour(ma_arr, ga_arr, delta_arr, levels=[2.29141, 6.15823], colors=[
