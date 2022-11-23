@@ -18,7 +18,7 @@ h_TD_sig = 0.0585
 #
 # SN anchoring from Riess 2016
 #
-use_SH0ES = True
+use_SH0ES = False
 aB = 0.71273
 aBsig = 0.00176
 anchor_lkl = lstAnchor.csv
@@ -26,14 +26,21 @@ anchor_lkl = lstAnchor.csv
 #
 # Early Universe data, from Planck 2018
 #
-use_early = False
+use_early = True
 rsdrag_mean = 147.09
 rsdrag_sig = 0.26
 
 #
+# Planck 2018 prior on Omega Lambda
+#
+use_PlanckOmegaL = True
+OmegaL_mean = 0.6847
+OmegaL_sig = 0.0073
+
+#
 # Pantheon SNe
 #
-use_Pantheon = True
+use_Pantheon = False
 Pantheon_lkl = lcparam_full_long.dat
 Pantheon_covmat = sys_full_long.dat
 Pantheon_subset = 1048
@@ -44,7 +51,7 @@ omegaSN [eV] = 1.
 #
 # quasars
 #
-use_quasars = False
+use_quasars = True
 quasars_lkl = quasars_Lusso2020.txt
 # SNe photon energy
 omega_UV [eV] = 4.96
@@ -73,7 +80,7 @@ BAOlowz_lkl = bao_smallz_2014.txt
 #
 # Bonamente et al. cluster data
 #
-use_clusters = True
+use_clusters = False
 wanna_correct = True
 # clusters SZ & X-ray photon energies
 omegaX [keV] = 5.
@@ -137,13 +144,13 @@ ne_IGM [1/cm3] = 1.6e-8
 OmL	  = [0.6847,   0.2, 0.75,  0.015]
 h0        = [  0.73,   0.6,  0.8,   0.02]
 logma	  = [   -14,   -17,  -11,    1.0]
-logga	  = [   -13,  -13., -10.7,  0.20]
+logga	  = [   -13,   -18, -10.7,  0.20]
 # logga	  = [   -10,  -14.,  -8.,    0.3]
-M0 	  = [ -19.3,   -21,  -18,    0.1]
+# M0 	  = [ -19.3,   -21,  -18,    0.1]
 rs	  = [147.78,  120., 160.,     1.]
-# qso_gamma = [   0.7,   0.1,  1.0,   0.07]
-# qso_beta  = [    5.,    0.,  10.,    0.3]
-# qso_delta = [   0.3,  0.05,  0.6,   0.05]
+qso_gamma = [   0.7,   0.1,  1.0,   0.07]
+qso_beta  = [    5.,    0.,  10.,    0.3]
+qso_delta = [   0.3,  0.05,  0.6,   0.05]
 
 #
 # Miscellaneous
@@ -152,7 +159,7 @@ rs	  = [147.78,  120., 160.,     1.]
 # whether to use chi2 or log(likelihood)
 # for quasars one must use the latter since the scattering needs to be fitted
 # for other data sets it can be either. If commented out, it defaults to True.
-use_loglkl = False
+use_loglkl = True
 
 # verbosity of output
 verbose = 2

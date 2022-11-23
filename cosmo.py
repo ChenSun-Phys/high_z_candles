@@ -53,6 +53,20 @@ def H_at_z(z, h0, OmL, unit='Mpc'):
     return res
 
 
+def dL_at_z_a2a3(z, h0, a2, a3):
+    """compute the luminosity distance by expanding ln(1+z) up to the second order, return in Mpc
+
+    :param z: redshfit
+    :param h0: Hubble in 100 km/s/Mpc
+    :param a2: the second coefficient of the log(1+z) expansion
+    :param a3: the third coefficient of the log(1+z) expansion
+
+    """
+    x = np.log10(1.+z)
+    res = np.log(10)*(_c_/1000.)/(h0*100.)*(x + a2*x**2 + a3*x**3)
+    return res
+
+
 def tau_at_z(z, h0, OmL):
     """
     Compute the comoving distance, return in Mpc

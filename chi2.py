@@ -36,6 +36,8 @@ def is_Out_of_Range(x, keys, params):
     for i in range(len(x)):
         if x[i] > params[keys[i]+' up'] or x[i] < params[keys[i]+' low']:
             res = True
+            # print(i, keys[i], "params[keys[i]+' up']", params[keys[i]+' up'],
+            #       "params[keys[i]+' low']", params[keys[i]+' low'], "x[i]", x[i])
             break
     return res
 
@@ -426,6 +428,27 @@ def chi2_early(rs, data=None):
     return chi2
 
 
+def chi2_PlanckOmegaL(OmL, data=None):
+    """
+    Computes OmegaLambda chi2. data must be equal to (mean, sig).
+    """
+
+    prior_mean, prior_sig = data
+
+    chi2 = 0.
+
+    # add a Gaussian prior to rs
+
+    chi2 += (OmL - prior_mean)**2 / prior_sig**2
+
+    if use_loglkl:
+        # note this is no longer chi2. It's -2(log(lkl))
+        # so it can be combined with quasars
+        chi2 += np.log(2.*np.pi) + 2.*np.log(prior_sig)
+
+    return chi2
+
+
 def chi2_clusters(pars, data=None, wanna_correct=True, fixed_Rvir=False, **kwargs):
     """
     Computes clusters chi2. data must be equal to (names, z_cls, DA_cls, err_cls, asymm_cls, ne0_cls, beta_cls, rc_out_cls, f_cls, rc_in_cls, Rvir_cls). **kwargs are the arguments of ADDMod.
@@ -503,6 +526,7 @@ def lnprob(x,
            use_quasars=False, quasars_data=None, quasars_kwargs=None,
            use_TDCOSMO=False, ext_data=None,
            use_early=False, early_data=None,
+           use_PlanckOmegaL=False, PlanckOmegaL_data=None,
            use_clusters=False, clusters_data=None, wanna_correct=True, fixed_Rvir=False, clusters_kwargs=None,
            verbose=False):
     """
@@ -534,7 +558,7 @@ def lnprob(x,
 
     # counting the number of experiments used
     experiments_counter = sum(
-        [use_SH0ES, use_Pantheon, use_quasars, use_TDCOSMO, use_early, use_BOSSDR12, use_BAOlowz, use_clusters])
+        [use_SH0ES, use_Pantheon, use_quasars, use_TDCOSMO, use_early, use_PlanckOmegaL, use_BOSSDR12, use_BAOlowz, use_clusters])
     lnprob_each_chi2 = []
 
     if not is_Out_of_Range(x, keys, params):  # to avoid overflow
@@ -595,6 +619,15 @@ def lnprob(x,
 
             if verbose > 2:
                 print('early=%f' % this_chi2)
+
+        if use_PlanckOmegaL:
+
+            this_chi2 = chi2_PlanckOmegaL(OmL, data=PlanckOmegaL_data)
+            chi2 += this_chi2
+            lnprob_each_chi2.append(this_chi2)
+
+            if verbose > 2:
+                print('Planck OmegaL chi2=%f' % this_chi2)
 
         # BOSS DR12
         if use_BOSSDR12:

@@ -253,6 +253,16 @@ def main(chainslength,
                         True or False')
 
     try:
+        params['use_PlanckOmegaL']
+    except KeyError:
+        params['use_PlanckOmegaL'] = False
+    if params['use_PlanckOmegaL'] is not True and \
+       params['use_PlanckOmegaL'] is not False:
+        raise Exception('Do you want Planck prior on OmegaLambda? Please check input.param\
+                        and specify the use_PlanckOmegaL parameter with\
+                        True or False')
+
+    try:
         params['use_TDCOSMO']
     except KeyError:
         params['use_TDCOSMO'] = False
@@ -622,7 +632,14 @@ def main(chainslength,
     # load rsdrag data
     if params['use_early'] is True:
         early_data = (params['rsdrag_mean'], params['rsdrag_sig'])
-        experiments.append('planck')
+        experiments.append('PlanckRs')
+    else:
+        early_data = None
+
+    # load Planck's prior on OmegaLambda
+    if params['use_PlanckOmegaL'] is True:
+        PlanckOmegaL_data = (params['OmegaL_mean'], params['OmegaL_sig'])
+        experiments.append('PlanckOmegaL')
     else:
         early_data = None
 
@@ -683,6 +700,7 @@ def main(chainslength,
                            use_quasars=params['use_quasars'], quasars_data=quasars_data, quasars_kwargs=quasars_kwargs,
                            use_TDCOSMO=params['use_TDCOSMO'], ext_data=ext_data,
                            use_early=params['use_early'], early_data=early_data,
+                           use_PlanckOmegaL=params['use_PlanckOmegaL'], PlanckOmegaL_data=PlanckOmegaL_data,
                            use_clusters=params['use_clusters'], clusters_data=clusters_data, wanna_correct=wanna_correct, fixed_Rvir=fixed_Rvir, clusters_kwargs=clusters_kwargs,
                            verbose=params['verbose'])
 
