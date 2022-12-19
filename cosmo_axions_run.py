@@ -263,6 +263,16 @@ def main(chainslength,
                         True or False')
 
     try:
+        params['use_Planckw']
+    except KeyError:
+        params['use_Planckw'] = False
+    if params['use_Planckw'] is not True and \
+       params['use_Planckw'] is not False:
+        raise Exception('Do you want Planck prior on OmegaLambda? Please check input.param\
+                        and specify the use_Planckw parameter with\
+                        True or False')
+
+    try:
         params['use_TDCOSMO']
     except KeyError:
         params['use_TDCOSMO'] = False
@@ -643,6 +653,13 @@ def main(chainslength,
     else:
         early_data = None
 
+    # load Planck's prior on w
+    if params['use_Planckw'] is True:
+        Planckw_data = (params['w_mean'], params['w_sig'])
+        experiments.append('Planckw')
+    else:
+        early_data = None
+
     # load clusters ADD
     if params['use_clusters'] is True:
         clusters_data = data.load_clusters(dir_lkl)
@@ -701,6 +718,7 @@ def main(chainslength,
                            use_TDCOSMO=params['use_TDCOSMO'], ext_data=ext_data,
                            use_early=params['use_early'], early_data=early_data,
                            use_PlanckOmegaL=params['use_PlanckOmegaL'], PlanckOmegaL_data=PlanckOmegaL_data,
+                           use_Planckw=params['use_Planckw'], Planckw_data=Planckw_data,
                            use_clusters=params['use_clusters'], clusters_data=clusters_data, wanna_correct=wanna_correct, fixed_Rvir=fixed_Rvir, clusters_kwargs=clusters_kwargs,
                            verbose=params['verbose'])
 

@@ -91,6 +91,8 @@ if __name__ == '__main__':
     # labels = keys
     # labels = [r"$\Omega_\Lambda$", r"$h$", r"$\log\ m_a$", r"$\log\ g_a$"]
     labels = [r"$\Omega_\Lambda$", r"$h$"]
+    if 'w' in keys:
+        labels.append(r"$w$")
     if 'logma' in keys:
         labels.append(r"$\log\ m_a$")
     if 'logga' in keys:

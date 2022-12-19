@@ -1,7 +1,7 @@
 ###########################################
 ###    Code for cosmology functions     ###
-###    by Manuel A. Buen-Abad, 2020     ###
-###         and Chen Sun, 2020          ###
+###  by Manuel A. Buen-Abad, 2020-2023  ###
+###       and Chen Sun, 2020-2023       ###
 ###########################################
 
 from __future__ import division
@@ -26,30 +26,40 @@ _1_over_cm_eV_ = 1.9732698045930252e-5  # [1/cm/eV]
 
 # FUNCTIONS:
 
-def Ekernel(OmL, z):
+def Ekernel_int(OmL, z, w=-1.):
+    """The integral of the E kernel. Note that igm.py::Ekernel() is the integrand.
+
+    :param OmL: Omega_Lambda
+    :param z: redshift
+    :param w: equation of state of the dark energy
+
+    """
     try:
-        res, _ = quad(lambda zp: 1 / sqrt(OmL + (1 - OmL) * (1 + zp)**3), 0, z)
+        res, _ = quad(lambda zp: 1 / sqrt(OmL * (1+zp)**(3*w+3) +
+                                          (1 - OmL) * (1 + zp)**3), 0, z)
     except Warning:
         print('OmL=%e, z=%e' % (OmL, z))
         raise Exception
     return res
 
 
-def H_at_z(z, h0, OmL, unit='Mpc'):
-    """
-    Hubble at z 
+def H_at_z(z, h0, OmL, w=-1., unit='Mpc'):
+    """Hubble at z 
 
     :param z: redshift
     :param h0:  H in [100*km/s/Mpc]
     :param OmL: Omega_Lambda
+    :param w: eos of DE
+    :param unit: 
+
     :param unit: flag to change the output unit
     :returns: H [1/Mpc] by default, or H [km/s/Mpc]
-
     """
     if unit == 'Mpc':
-        res = h0*100.*sqrt(OmL + (1 - OmL) * (1 + z)**3)/(_c_/1000.)
+        res = h0*100.*sqrt(OmL * (1+z)**(3*w+3) + (1 - OmL)
+                           * (1 + z)**3)/(_c_/1000.)
     else:
-        res = h0*100.*sqrt(OmL + (1 - OmL) * (1 + z)**3)
+        res = h0*100.*sqrt(OmL * (1+z)**(3*w+3) + (1 - OmL) * (1 + z)**3)
     return res
 
 
@@ -67,7 +77,7 @@ def dL_at_z_a2a3(z, h0, a2, a3):
     return res
 
 
-def tau_at_z(z, h0, OmL):
+def tau_at_z(z, h0, OmL, w=-1.):
     """
     Compute the comoving distance, return in Mpc
 
@@ -79,44 +89,53 @@ def tau_at_z(z, h0, OmL):
         Hubble in 100 km/s/Mpc
     OmL : scalar
         Omega_Lambda
+    w : equation of state of the Dark Energy
 
     """
     try:
-        res, _ = quad(lambda zp: 1. / sqrt(OmL +
+        res, _ = quad(lambda zp: 1. / sqrt(OmL * (1+zp)**(3*w+3) +
                                            (1 - OmL) * (1 + zp)**3), 0., z)
     except Warning:
-        print('OmL=%e, z=%e' % (OmL, z))
+        print('OmL=%e, z=%e, w=%e' % (OmL, z, w))
         raise Exception
     res = res * _c_/1e5/h0
     return res
 
 
-def dA_at_z(z, h0, OmL):
-    """
-    Angular distance [Mpc]
+def dA_at_z(z, h0, OmL, w=-1.):
+    """Angular distance [Mpc]
 
     :param z: redshift
     :param h0: H in [100*km/s/Mpc]
     :param OmL: Omega_Lambda
+    :param w: eos of dark energy
+
     :returns: angular distance [Mpc]
+    """
+    return tau_at_z(z, h0, OmL, w=w)/(1.+z)
+
+
+def muLCDM(z, h0, OmL, w=-1.):
+    """The distance modulus
+
+    :param z: redshift
+    :param h0: Hubble constant [100 km/s/Mpc]
+    :param OmL: Omega_Lambda
+    :param w: eos of dark energy
 
     """
-    return tau_at_z(z, h0, OmL)/(1.+z)
-
-
-def muLCDM(z, h0, OmL):
     try:
-        res = 5. * log10((1.+z) * Ekernel(OmL, z)) + \
+        res = 5. * log10((1.+z) * Ekernel_int(OmL, z, w)) + \
             5.*log10(_c_/(h0*1e5)) + 25
     except Warning:
-        print('z=%e, OmL=%e' % (z, OmL))
+        print('z=%e, OmL=%e, w=%e' % (z, OmL, w))
         print('h0=%e' % h0)
-        print('(1+z)*Ekernel=%e, c/h0=%e' %
-              ((1. + z) * Ekernel(OmL, z), _c_ / (h0 * 1e5)))
+        print('(1+z)*Ekernel_int=%e, c/h0=%e' %
+              ((1. + z) * Ekernel_int(OmL, z, w), _c_ / (h0 * 1e5)))
     return res
 
 
-def LumMod(ma, g, z, B, mg, h, OmL,
+def LumMod(ma, g, z, B, mg, h, OmL, w=-1.,
            s=1.,
            omega=1.,
            axion_ini_frac=0.,
@@ -138,6 +157,7 @@ def LumMod(ma, g, z, B, mg, h, OmL,
     mg: photon mass [eV]
     h: Hubble [100 km/s/Mpc]
     OmL: Omega_Lambda
+    w: eos of DE
     s: domain size [Mpc]
     omega: energy [eV]
     method: (simps, quad, old) for scalar z, or 'vectorize' if z is an array.
@@ -157,6 +177,7 @@ def LumMod(ma, g, z, B, mg, h, OmL,
                                     mg=mg,
                                     h=h,
                                     Omega_L=OmL,
+                                    w=w,
                                     axion_ini_frac=axion_ini_frac,
                                     smoothed=smoothed,
                                     redshift_dependent=redshift_dependent,
@@ -170,7 +191,7 @@ def LumMod(ma, g, z, B, mg, h, OmL,
     return res
 
 
-def ADDMod(ma, g, z, h, OmL,
+def ADDMod(ma, g, z, h, OmL, w=-1.,
 
            omegaX=1.e4,
            omegaCMB=2.4e-4,
@@ -264,6 +285,7 @@ def ADDMod(ma, g, z, h, OmL,
                       mg=mgIGM,
                       h=h,
                       Omega_L=OmL,
+                      w=w,
                       axion_ini_frac=IaIg,
                       smoothed=smoothed_IGM,
                       redshift_dependent=redshift_dependent,
@@ -278,6 +300,7 @@ def ADDMod(ma, g, z, h, OmL,
                         mg=mgIGM,
                         h=h,
                         Omega_L=OmL,
+                        w=w,
                         axion_ini_frac=0.,
                         smoothed=smoothed_IGM,
                         redshift_dependent=redshift_dependent,
