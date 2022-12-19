@@ -614,7 +614,6 @@ def lnprob(x,
                 print('Planck OmegaL chi2=%f' % this_chi2)
 
         if use_Planckw:
-
             this_chi2 = chi2_Gaussian(w, data=Planckw_data)
             chi2 += this_chi2
             lnprob_each_chi2.append(this_chi2)

@@ -651,14 +651,15 @@ def main(chainslength,
         PlanckOmegaL_data = (params['OmegaL_mean'], params['OmegaL_sig'])
         experiments.append('PlanckOmegaL')
     else:
-        early_data = None
+        PlanckOmegaL_data = None
 
     # load Planck's prior on w
     if params['use_Planckw'] is True:
         Planckw_data = (params['w_mean'], params['w_sig'])
         experiments.append('Planckw')
+        print("!!! You asked to add prior on w. Be extra careful when using this option, as the w prior is likely from Planck2018+BAO(+SNe). You should turn off Pantheon and BAO to avoid double counting !!!")
     else:
-        early_data = None
+        Planckw_data = None
 
     # load clusters ADD
     if params['use_clusters'] is True:
