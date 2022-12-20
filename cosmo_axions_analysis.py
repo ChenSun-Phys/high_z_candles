@@ -76,7 +76,7 @@ if __name__ == '__main__':
     params, keys, keys_fixed = fill_mcmc_parameters(
         os.path.join(directory, 'log.param'))
 
-    # test data authenticity
+    # test data integrity
     if len(keys) != len(samples[0]):
         raise Exception(
             'log.param and h5 files are not consistent. Data is compromised. Quit analyzing.')
@@ -90,7 +90,13 @@ if __name__ == '__main__':
     plt.figure(0)
     # labels = keys
     # labels = [r"$\Omega_\Lambda$", r"$h$", r"$\log\ m_a$", r"$\log\ g_a$"]
-    labels = [r"$\Omega_\Lambda$", r"$h$"]
+    # labels = [r"$\Omega_\Lambda$"]
+    labels = []
+
+    if 'OmL' in keys:
+        labels.append(r"$\Omega_\Lambda$")
+    if 'h' in keys:
+        labels.append(r"$h$")
     if 'w' in keys:
         labels.append(r"$w$")
     if 'logma' in keys:
