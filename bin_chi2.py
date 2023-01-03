@@ -18,22 +18,37 @@ from numpy import pi, sqrt, log, log10, exp, power
 from scipy.interpolate import interp2d
 from scipy.interpolate import LinearNDInterpolator as lndi
 from tqdm import tqdm
-from cosmo_axions_run import pltpath
+from cosmo_axions_run import pltpath, fill_mcmc_parameters
 
 
-def parse(directory, chain_name, directory2=None, chain2_name=None, bins=25):
-    """Parse the chains and return the binned chi2
+def parse(directory,
+          chain_name,
+          directory2=None,
+          chain2_name=None,
+          bins=25,
+          x_name='logma',
+          y_name='logga',
+          x_upper=np.inf,
+          x_lower=-np.inf,
+          y_upper=np.inf,
+          y_lower=-np.inf):
+    """Parse the chains and return the binned chi2. Marginalize all but two variables, denoted x and y.
 
     :param directory: directory of the chain
     :param chain_name: name of the chain
     :param directory2: directory of the second chain, optional
     :param chain2_name: name of the second chain to be combined together, optional
-    :param bins: number of bins
+    :param bins: number of bins (default 25)
+    :param x_name: the name of variable x (default: 'logma')
+    :param y_name: the name of variable y (default: 'logga')
+    :param x_upper: the upper cut of the x value (default: np.inf)
+    :param x_lower: the lower cut of the x value (default: -np.inf)
+    :param y_upper: the upper cut of the y value (default: np.inf)
+    :param y_lower: the lower cut of the y value (default: -np.inf)
     :returns: (bf_chi2, ma_mesh, ga_mesh, chi2_mins, idx_mins_global, ma_arr, ga_arr, delta_arr) for global best fit chi2, meshgrid of ma, meshgrid of ga, meshgrid of chi2 local minimum in each block, the corresponding global indices of the local chi2 minima, ma array, ga array, interpolated local chi2 minimum
     :rtype: tuple of (scalar, 2D array, 2D array, 2D array, 2D array, 1D array, 1D array, 1D array)
 
     """
-
     # reading chains
 
     path1 = os.path.join(directory, chain_name)
@@ -46,15 +61,16 @@ def parse(directory, chain_name, directory2=None, chain2_name=None, bins=25):
         f2 = h5py.File(path2, 'r')
         f2 = f2['mcmc']
         f = {}
-        for key in f1.keys():
-            f[key] = np.concatenate((f1[key], f2[key]))
+        for h5_key in f1.keys():
+            f[h5_key] = np.concatenate((f1[h5_key], f2[h5_key]))
     else:
         # there is only one chain
         f = f1
 
-    keys = f.keys()
-    print(keys)
+    h5_keys = f.keys()
+    print(h5_keys)
 
+    # continue parsing the chain and make boxes around x and y
     pts = np.array(f['chain'])  # the points
     print("pts shape is:", pts.shape)
 
@@ -70,34 +86,55 @@ def parse(directory, chain_name, directory2=None, chain2_name=None, bins=25):
 
     blobs = f['blobs']
     experiments = dict(blobs.dtype.fields).keys()
+    print("experiments:", experiments)
 
     del f
 
+    #
+    # define the box of x, y
+    #
+    # load the meta data from log.param
+    # load log.param
+    params, mcmc_keys, mcmc_keys_fixed = fill_mcmc_parameters(
+        os.path.join(directory, 'log.param'))
+
+    # find the index of x and y
+    print('variables scanned:', mcmc_keys)
+    x_idx = np.where(np.array(mcmc_keys) == x_name)[0][0]
+    y_idx = np.where(np.array(mcmc_keys) == y_name)[0][0]
+    print(x_idx)
+    print(y_idx)
+
+    # test data integrity
+    if len(mcmc_keys) != len(pts[0]):
+        raise Exception(
+            'log.param and h5 files are not consistent. Data is compromised. Quit analyzing.')
+
     # # the best fit chi2 and where it is
 
-    chain_ga = pts[:, 3]  # the values of ga
-    # _, edges_ga = np.histogram(chain_ga, bins=bins+1)  # the edges of the bins
-    chain_neg_ga = chain_ga[np.where(chain_ga < 0)]  # only negatives!
-    _, edges_ga = np.histogram(
-        chain_neg_ga, bins=bins+1)  # the edges of the bins
-    print("edges_ga:", edges_ga)
-    print("chain_ga has the length of", len(chain_ga))
-    print("chain_neg_ga has the length of", len(chain_neg_ga))
+    chain_y = pts[:, y_idx]  # the values of y (e.g. ga)
+    chain_y_cut = chain_y[np.where(chain_y < y_upper)]  # y upper cut
+    chain_y_cut = chain_y_cut[np.where(chain_y_cut > y_lower)]  # y lower cut
+    _, edges_y = np.histogram(
+        chain_y_cut, bins=bins+1)  # the edges of the bins
+    print("edges_y:", edges_y)
+    print("chain_y has the length of", len(chain_y))
+    print("chain_y_cut has the length of", len(chain_y_cut))
 
-    chain_ma = pts[:, 2]  # the values of ma
-    # _, edges_ma = np.histogram(chain_ma, bins=bins)  # the edges of the bins
-    chain_neg_ma = chain_ma[np.where(chain_ma < 0)]  # only negatives!
-    _, edges_ma = np.histogram(
-        chain_neg_ma, bins=bins)  # the edges of the bins
-    print("edges_ma:", edges_ma)
-    print("chain_ma has the length of", len(chain_ma))
-    print("chain_neg_ma has the length of", len(chain_neg_ma))
-    # test
-    tmp1_arr = np.where(chain_ga == 0.)[0]
-    tmp2_arr = np.where(tmp1_arr > 3901099)[0]
-    print("len(tmp1_arr)", len(tmp1_arr))
-    print("len(tmp2_arr)", len(tmp2_arr))
-    print("the index of the zero", tmp1_arr)
+    chain_x = pts[:, x_idx]  # the values of x (e.g. ma)
+    chain_x_cut = chain_x[np.where(chain_x < x_upper)]  # upper cut
+    chain_x_cut = chain_x_cut[np.where(chain_x_cut > x_lower)]  # lower cut
+    _, edges_x = np.histogram(
+        chain_x_cut, bins=bins)  # the edges of the bins
+    print("edges_x:", edges_x)
+    print("chain_x has the length of", len(chain_x))
+    print("chain_x_cut has the length of", len(chain_x_cut))
+    # # test
+    # tmp1_arr = np.where(chain_ga == 0.)[0]
+    # tmp2_arr = np.where(tmp1_arr > 3901099)[0]
+    # print("len(tmp1_arr)", len(tmp1_arr))
+    # print("len(tmp2_arr)", len(tmp2_arr))
+    # print("the index of the zero", tmp1_arr)
 
     # the best fit chi2 and where it is
     # bf_chi2 = min(chi2_tot[np.where(chain_ga < 0)])
@@ -120,10 +157,10 @@ def parse(directory, chain_name, directory2=None, chain2_name=None, bins=25):
         bf_chi2, each_sum))  # sanity check
 
     # the center values
-    block_ga = (edges_ga[:-1] + edges_ga[1:])/2.
-    block_ma = (edges_ma[:-1] + edges_ma[1:])/2.
+    block_y = (edges_y[:-1] + edges_y[1:])/2.
+    block_x = (edges_x[:-1] + edges_x[1:])/2.
     # ga_mesh, ma_mesh = np.meshgrid(block_ga, block_ma, indexing='ij')
-    ma_mesh, ga_mesh = np.meshgrid(block_ma, block_ga, indexing='ij')
+    x_mesh, y_mesh = np.meshgrid(block_x, block_y, indexing='ij')
 
     # preparation for the computation of the chi2(ma, ga) function
 
@@ -131,18 +168,18 @@ def parse(directory, chain_name, directory2=None, chain2_name=None, bins=25):
     idx_mins = []  # the index of the min chi2
     idx_mins_global = []  # the index of the min chi2 in the total chi2 chain
     # the triples (ma, ga, min_chi2) only for those bins where the value is well defined
-    ma_ga_chi2 = []
+    x_y_chi2 = []
 
     wheres = {}  # those indices that satisfy the conditions to be within the bin
 
-    for i in tqdm(range(len(edges_ma)-1)):
-        for j in (range(len(edges_ga)-1)):
+    for i in tqdm(range(len(edges_x)-1)):
+        for j in (range(len(edges_y)-1)):
 
-            # those points with ga, ma values within the bin
-            wheres[i, j] = np.where((chain_ga > edges_ga[j])
-                                    & (chain_ga <= edges_ga[j+1])
-                                    & (chain_ma > edges_ma[i])
-                                    & (chain_ma <= edges_ma[i+1]))
+            # those points with y, x values within the bin
+            wheres[i, j] = np.where((chain_y > edges_y[j])
+                                    & (chain_y <= edges_y[j+1])
+                                    & (chain_x > edges_x[i])
+                                    & (chain_x <= edges_x[i+1]))
 
             # print('ma=%.2g, ga=%.2g' % (edges_ma[j], edges_ga[i]))
             # print('(%d, %d) block size: %d' % (i, j, len(wheres[i, j][0])))
@@ -163,8 +200,8 @@ def parse(directory, chain_name, directory2=None, chain2_name=None, bins=25):
                 idx_mins_global.append(
                     np.where(chi2_tot == this_min_chi2)[0][0])
                 # appending to the data
-                ma_ga_chi2.append(
-                    [ma_mesh[i, j], ga_mesh[i, j], this_min_chi2])
+                x_y_chi2.append(
+                    [x_mesh[i, j], y_mesh[i, j], this_min_chi2])
 
             else:
                 chi2_mins.append(np.inf)
@@ -179,47 +216,47 @@ def parse(directory, chain_name, directory2=None, chain2_name=None, bins=25):
     idx_mins = np.array(idx_mins, dtype=int)
     idx_mins_global = np.array(idx_mins_global, dtype=int)
 
-    chi2_mins = chi2_mins.reshape(ma_mesh.shape)
-    idx_mins = idx_mins.reshape(ma_mesh.shape)
-    idx_mins_global = idx_mins_global.reshape(ma_mesh.shape)
+    chi2_mins = chi2_mins.reshape(x_mesh.shape)
+    idx_mins = idx_mins.reshape(x_mesh.shape)
+    idx_mins_global = idx_mins_global.reshape(x_mesh.shape)
     # print(idx_mins_global)
 
-    ma_ga_chi2 = np.array(ma_ga_chi2)
+    x_y_chi2 = np.array(x_y_chi2)
 
     #
     # interpolating over the data
     #
     # since data is not a uniform grid, we need to use LinearNDInterpolator
-    delta_chi2 = lndi(ma_ga_chi2[:, 0:2], ma_ga_chi2[:, 2]-bf_chi2)
+    delta_chi2 = lndi(x_y_chi2[:, 0:2], x_y_chi2[:, 2]-bf_chi2)
 
-    ma_arr = np.linspace(edges_ma[0], edges_ma[-1], 201)
-    ga_arr = np.linspace(edges_ga[0], edges_ga[-1], 201)
-    ga_gr, ma_gr = np.meshgrid(ga_arr, ma_arr, indexing='ij')
-    delta_arr = delta_chi2(ma_gr, ga_gr)
+    x_arr = np.linspace(edges_x[0], edges_x[-1], 201)
+    y_arr = np.linspace(edges_y[0], edges_y[-1], 201)
+    y_gr, x_gr = np.meshgrid(y_arr, x_arr, indexing='ij')
+    delta_arr = delta_chi2(x_gr, y_gr)
 
-    return (bf_chi2, ma_mesh, ga_mesh, chi2_mins, idx_mins_global, ma_arr, ga_arr, delta_arr, idx_mins_global, pts)
+    return (bf_chi2, x_mesh, y_mesh, chi2_mins, idx_mins_global, x_arr, y_arr, delta_arr, _, pts, blobs)
 
 
-def query(log10ma, log10ga, ma_mesh, ga_mesh, target_mesh):
+def query(x, y, x_mesh, y_mesh, target_mesh):
     """This function finds the minimum of the chi2 in the block that contains the point (ma, ga). 
 
-    :param log10ma: log10(mass of axion/eV)
-    :param log10ga: log10(axion-photon coupling/(1/GeV))
-    :param ma_mesh: the meshgrid of log10(ma)
-    :param ga_mesh: the meshgrid of log10(ga)
+    :param x: value of x, e.g. log10(mass of axion/eV)
+    :param y: value of y, e.g. log10(axion-photon coupling/(1/GeV))
+    :param x_mesh: the meshgrid of log10(ma)
+    :param y_mesh: the meshgrid of log10(ga)
     :param target_mesh: the target meshgrid to be checked. If it's the chi2_mesh, it outputs the minimal chi2 of the given box; if it's the global index mesh, it will output the index of the the minimal chi2 in the given box. 
 
     """
-    ma_arr = ma_mesh[:, 0]
-    ga_arr = ga_mesh[0, :]
+    x_arr = x_mesh[:, 0]
+    y_arr = y_mesh[0, :]
 
     # find the block
-    ma_idx = np.searchsorted(ma_arr, log10ma)
-    ga_idx = np.searchsorted(ga_arr, log10ga)
-    print(ma_idx)
-    print(ga_idx)
+    x_idx = np.searchsorted(x_arr, x)
+    y_idx = np.searchsorted(y_arr, y)
+    print(x_idx)
+    print(y_idx)
 
-    return target_mesh[ma_idx, ga_idx]
+    return target_mesh[x_idx, y_idx]
 
 
 if __name__ == '__main__':
