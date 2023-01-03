@@ -34,32 +34,33 @@ Mpc_times_eV = Mpc_times_GeV/GeV_over_eV  # Mpc*eV conversion
 
 # FUNCTIONS:
 
-def Ekernel(Omega_L, z, w=-1.):
-    """
-    E(z) kernel.
+def Ekernel(Omega_L, z, w0=-1., wa=0.):
+    """E(z) kernel, without integral
 
-    Omega_L : cosmological constant fractional density
-    z : redshift
-    """
+    :param Omega_L: cosmological constant fractional density
+    :param z: redshift
+    :param w0: equation of state of the dark energy today (default: -1.)
+    :param wa: parametrizes how w changes over time, w = w0 + wa*(1-a)  (default: 0.)
 
+    """
     Omega_m = 1. - Omega_L
 
-    return sqrt(Omega_L*(1.+z)**(3.*w+3.) + Omega_m*(1. + z)**3.)
+    return sqrt(Omega_L*(1.+z)**(3.*(w0+wa*(z/(1.+z)))+3.) + Omega_m*(1. + z)**3.)
 
 
-def DC(z, h=0.7, Omega_L=0.7, w=-1.):
+def DC(z, h=0.7, Omega_L=0.7, w0=-1., wa=0.):
+    """Comoving distance [Mpc].
+
+    :param z: redshift
+    :param h: reduced Hubble parameter H0/100 [km/s/Mpc] (default: 0.7)
+    :param Omega_L: cosmological constant fractional density (default: 0.7)
+    :param w0: equation of state of the dark energy today (default: -1.)
+    :param wa: parametrizes how w changes over time, w = w0 + wa*(1-a)  (default: 0.)
+
     """
-    Comoving distance [Mpc].
-
-    z : redshift
-    h : reduced Hubble parameter H0/100 [km/s/Mpc] (default: 0.7)
-    Omega_L : cosmological constant fractional density (default: 0.7)
-    w: eos of DE
-    """
-
     dH = (c0*1.e-3)/(100.*h)  # Hubble distance [Mpc]
 
-    def integrand(z): return 1./Ekernel(Omega_L, z, w)
+    def integrand(z): return 1./Ekernel(Omega_L, z, w0, wa)
     integral = quad(integrand, 0., z)[0]
 
     return dH*integral
@@ -72,32 +73,34 @@ def igm_Psurv(ma, g, z,
               mg=3.e-15,
               h=0.7,
               Omega_L=0.7,
-              w=-1.,
+              w0=-1.,
+              wa=0.,
               axion_ini_frac=0.,
               smoothed=False,
               redshift_dependent=True,
               method='simps',
               prob_func='norm_log',
               Nz=501):
-    """
-    Photon IGM survival probability.
+    """Photon IGM survival probability.
 
-    ma : axion mass [eV]
-    g : axion-photon coupling [GeV^-2]
-    z : redshift
-    s : magnetic domain size, today [Mpc] (default: 1.)
-    B : magnetic field, today [nG] (default: 1.)
-    omega : photon energy, today [eV] (default: 1.)
-    mg : photon mass [eV] (default: 3.e-15)
-    h : reduced Hubble parameter H0/100 [km/s/Mpc] (default: 0.7)
-    Omega_L : cosmological constant fractional density (default: 0.7)
-    w: eos of DE
-    axion_ini_frac : the initial intensity fraction of axions: I_axion/I_photon (default: 0.)
-    smoothed : whether sin^2 in conversion probability is smoothed out [bool] (default: False)
-    redshift_dependent : whether the IGM background depends on redshift [bool] (default: True)
-    method : the integration method 'simps'/'quad'/'old' (default: 'simps')
-    prob_func : the form of the probability function: 'small_P' for the P<<1 limit, 'full_log' for log(1-1.5*P), and 'norm_log' for the normalized log: log(abs(1-1.5*P)) [str] (default: 'norm_log')
-    Nz : number of redshift bins, for the 'simps' methods (default: 501)
+    :param ma: axion mass [eV]
+    :param g: axion-photon coupling [GeV^-2]
+    :param z: redshift
+    :param s: magnetic domain size, today [Mpc] (default: 1.)
+    :param B: magnetic field, today [nG] (default: 1.)
+    :param omega: photon energy, today [eV] (default: 1.)
+    :param mg: photon mass [eV] (default: 3.e-15)
+    :param h: reduced Hubble parameter H0/100 [km/s/Mpc] (default: 0.7)
+    :param Omega_L: cosmological constant fractional density (default: 0.7)
+    :param w0: equation of state of the dark energy today (default: -1.)
+    :param wa: parametrizes how w changes over time, w = w0 + wa*(1-a)  (default: 0.)    
+    :param axion_ini_frac: the initial intensity fraction of axions: I_axion/I_photon (default: 0.)
+    :param smoothed: whether sin^2 in conversion probability is smoothed out [bool] (default: False)
+    :param redshift_dependent: whether the IGM background depends on redshift [bool] (default: True)
+    :param method: the integration method 'simps'/'quad'/'old' (default: 'simps')
+    :param prob_func: the form of the probability function: 'small_P' for the P<<1 limit, 'full_log' for log(1-1.5*P), and 'norm_log' for the normalized log: log(abs(1-1.5*P)) [str] (default: 'norm_log')
+    :param Nz: number of redshift bins, for the 'simps' methods (default: 501)
+
     """
     z_arr, is_scalar = treat_as_arr(z)
     A = (2./3)*(1 + axion_ini_frac)  # equilibration constant
@@ -121,12 +124,13 @@ def igm_Psurv(ma, g, z,
             # constructing integrand
             if prob_func == 'norm_log':
                 integrand = log(np.abs(1 - 1.5*Pga(zArr))) / \
-                    Ekernel(Omega_L, zArr, w=w)
+                    Ekernel(Omega_L, zArr, w0=w0, wa=wa)
             elif prob_func == 'small_P':
-                integrand = -1.5*Pga(zArr) / Ekernel(Omega_L, zArr, w=w)
+                integrand = -1.5*Pga(zArr) / \
+                    Ekernel(Omega_L, zArr, w0=w0, wa=wa)
             elif prob_func == 'full_log':
                 integrand = log(1 - 1.5*Pga(zArr)) / \
-                    Ekernel(Omega_L, zArr, w=w)
+                    Ekernel(Omega_L, zArr, w0=w0, wa=wa)
             else:
                 raise ValueError(
                     "Argument 'prob_func'={} must be equal to either 'small_P', 'full_log', or 'norm_log'. It's neither.".format(prob_func))
@@ -150,12 +154,13 @@ def igm_Psurv(ma, g, z,
             # constructing integrand
             if prob_func == 'norm_log':
                 integrand = log(np.abs(1 - 1.5*Pga(zArr))) / \
-                    Ekernel(Omega_L, zArr, w=w)
+                    Ekernel(Omega_L, zArr, w0=w0, wa=wa)
             elif prob_func == 'small_P':
-                integrand = -1.5*Pga(zArr) / Ekernel(Omega_L, zArr, w=w)
+                integrand = -1.5*Pga(zArr) / \
+                    Ekernel(Omega_L, zArr, w0=w0, wa=wa)
             elif prob_func == 'full_log':
                 integrand = log(1 - 1.5*Pga(zArr)) / \
-                    Ekernel(Omega_L, zArr, w=w)
+                    Ekernel(Omega_L, zArr, w0=w0, wa=wa)
             else:
                 raise ValueError(
                     "Argument 'prob_func'={} must be equal to either 'small_P', 'full_log', or 'norm_log'. It's neither.".format(prob_func))
@@ -170,13 +175,13 @@ def igm_Psurv(ma, g, z,
             # constructing integrand
             if prob_func == 'norm_log':
                 def integrand(zz): return log(
-                    np.abs(1 - 1.5*Pga(zz))) / Ekernel(Omega_L, zz, w=w)
+                    np.abs(1 - 1.5*Pga(zz))) / Ekernel(Omega_L, zz, w0=w0, wa=wa)
             elif prob_func == 'small_P':
                 def integrand(zz): return -1.5*Pga(zz) / \
-                    Ekernel(Omega_L, zz, w=w)
+                    Ekernel(Omega_L, zz, w0=w0, wa=wa)
             elif prob_func == 'full_log':
                 def integrand(zz): return log(
-                    1 - 1.5*Pga(zz)) / Ekernel(Omega_L, zz, w=w)
+                    1 - 1.5*Pga(zz)) / Ekernel(Omega_L, zz, w0=w0, wa=wa)
             else:
                 raise ValueError(
                     "Argument 'prob_func'={} must be equal to either 'small_P', 'full_log', or 'norm_log'. It's neither.".format(prob_func))
@@ -189,7 +194,8 @@ def igm_Psurv(ma, g, z,
                 raise Exception(
                     "only 'vectorize' supports z array for now and you chose 'old'")
 
-            y = DC(z, h=h, Omega_L=Omega_L, w=w)  # computing comoving distance
+            # computing comoving distance
+            y = DC(z, h=h, Omega_L=Omega_L, w0=w0, wa=wa)
             argument = -1.5*(y/s)*Pga(z)  # argument of exponential
 
         else:
@@ -201,7 +207,8 @@ def igm_Psurv(ma, g, z,
             raise Exception(
                 "only redshift+vectorize supports z array for now and you chose redshift independent scheme")
 
-        y = DC(z, h=h, Omega_L=Omega_L, w=w)  # computing comoving distance
+        # computing comoving distance
+        y = DC(z, h=h, Omega_L=Omega_L, w0=w0, wa=wa)
         # z-independent probability conversion in one domain
         P = P0(ma, g, s, B=B, omega=omega, mg=mg, smoothed=smoothed)
         argument = -1.5*(y/s)*P  # argument of exponential

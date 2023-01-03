@@ -90,7 +90,11 @@ def fill_mcmc_parameters(path):
                 try:
                     res[key] = float(words[1])
                 except:
-                    res[key] = (words[1]).strip()
+                    try:
+                        res[key] = (words[1]).strip()
+                    except IndexError:
+                        print(key)
+                        print(words)
                     # not a number, start parsing
                     # store tuple
                     if res[key][0] == '(' and res[key][-1] == ')':
@@ -161,6 +165,15 @@ def main(chainslength,
         # save the input file only after the params are legit
         from shutil import copyfile
         copyfile(path_of_param, os.path.join(directory, 'log.param'))
+
+    # determine if photon survival needs to be comptued
+    # this will add some significant time cost
+    if 'logga' not in keys:
+        skip_LumMod = True
+        print('ga is not being scanned, skipping LumMod()')
+    else:
+        skip_LumMod = False
+        print('ga is being scanned, so LumMod() needs to be computed.')
 
     # fill up defaults
     try:
@@ -263,13 +276,23 @@ def main(chainslength,
                         True or False')
 
     try:
-        params['use_Planckw']
+        params['use_Planckw0']
     except KeyError:
-        params['use_Planckw'] = False
-    if params['use_Planckw'] is not True and \
-       params['use_Planckw'] is not False:
+        params['use_Planckw0'] = False
+    if params['use_Planckw0'] is not True and \
+       params['use_Planckw0'] is not False:
         raise Exception('Do you want Planck prior on OmegaLambda? Please check input.param\
-                        and specify the use_Planckw parameter with\
+                        and specify the use_Planckw0 parameter with\
+                        True or False')
+
+    try:
+        params['use_Planckwa']
+    except KeyError:
+        params['use_Planckwa'] = False
+    if params['use_Planckwa'] is not True and \
+       params['use_Planckwa'] is not False:
+        raise Exception('Do you want Planck prior on OmegaLambda? Please check input.param\
+                        and specify the use_Planckwa parameter with\
                         True or False')
 
     try:
@@ -519,7 +542,8 @@ def main(chainslength,
                   'redshift_dependent': redshift_dependent,
                   'method': method_IGM,
                   'prob_func': prob_func_IGM,
-                  'Nz': Nz_IGM}
+                  'Nz': Nz_IGM,
+                  'skip_LumMod': skip_LumMod}
 
     quasars_kwargs = {'B': B_IGM,
                       'mg': omega_plasma(ne_IGM),
@@ -533,7 +557,8 @@ def main(chainslength,
                       'method': method_IGM,
                       'prob_func': prob_func_IGM,
                       'Nz': Nz_IGM,
-                      'vectorize': quasars_vectorize}
+                      'vectorize': quasars_vectorize,
+                      'skip_LumMod': skip_LumMod}
 
     clusters_kwargs = {'omegaX': omegaX,
                        'omegaCMB': omegaCMB,
@@ -653,13 +678,21 @@ def main(chainslength,
     else:
         PlanckOmegaL_data = None
 
-    # load Planck's prior on w
-    if params['use_Planckw'] is True:
-        Planckw_data = (params['w_mean'], params['w_sig'])
-        experiments.append('Planckw')
-        print("!!! You asked to add prior on w. Be extra careful when using this option, as the w prior is likely from Planck2018+BAO(+SNe). You should turn off Pantheon and BAO to avoid double counting !!!")
+    # load Planck's prior on w0
+    if params['use_Planckw0'] is True:
+        Planckw0_data = (params['w0_mean'], params['w0_sig'])
+        experiments.append('Planckw0')
+        print("!!! You asked to add prior on w0. Be extra careful when using this option, as the w0 prior is likely from Planck2018+BAO(+SNe). You should turn off Pantheon and BAO to avoid double counting !!!")
     else:
-        Planckw_data = None
+        Planckw0_data = None
+
+    # load Planck's prior on wa
+    if params['use_Planckwa'] is True:
+        Planckwa_data = (params['wa_mean'], params['wa_sig'])
+        experiments.append('Planckwa')
+        print("!!! You asked to add prior on wa. Be extra careful when using this option, as the wa prior is likely from Planck2018+BAO(+SNe). You should turn off Pantheon and BAO to avoid double counting !!!")
+    else:
+        Planckwa_data = None
 
     # load clusters ADD
     if params['use_clusters'] is True:
@@ -719,7 +752,8 @@ def main(chainslength,
                            use_TDCOSMO=params['use_TDCOSMO'], ext_data=ext_data,
                            use_early=params['use_early'], early_data=early_data,
                            use_PlanckOmegaL=params['use_PlanckOmegaL'], PlanckOmegaL_data=PlanckOmegaL_data,
-                           use_Planckw=params['use_Planckw'], Planckw_data=Planckw_data,
+                           use_Planckw0=params['use_Planckw0'], Planckw0_data=Planckw0_data,
+                           use_Planckwa=params['use_Planckwa'], Planckwa_data=Planckwa_data,
                            use_clusters=params['use_clusters'], clusters_data=clusters_data, wanna_correct=wanna_correct, fixed_Rvir=fixed_Rvir, clusters_kwargs=clusters_kwargs,
                            verbose=params['verbose'])
 

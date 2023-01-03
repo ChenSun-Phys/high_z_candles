@@ -148,7 +148,7 @@ def chi2_quasars(x,
                  **kwargs):
     """Computes quasars chi2.     **kwargs contain the arguments for LumMod. 
 
-    :param x: the theory point that contains (ma, ga, OmL, h0, w, qso_gamma, qso_beta)
+    :param x: the theory point that contains (ma, ga, OmL, h0, w0, wa, qso_gamma, qso_beta)
     :param data: must be have certain structures. See source code for the structure needed. 
     :param vectorize: whether to vectorize the computation
     :param full_output: whether to output other quantities besides chi2, useful for testing. 
@@ -160,7 +160,7 @@ def chi2_quasars(x,
             'You asked for chi2 but quasars have to use log(likelihood) since qso_delta makes it otherwise unbounded')
 
     # theory point
-    (ma, ga, OmL, h0, w, qso_gamma, qso_beta, qso_delta) = x
+    (ma, ga, OmL, h0, w0, wa, qso_gamma, qso_beta, qso_delta) = x
 
     # Anchor_SN, _, Anchor_Ceph, _, _, Anchor_Msig, _, _ = data
     (qso_name_arr,
@@ -191,7 +191,8 @@ def chi2_quasars(x,
                                    z=qso_z_arr,
                                    h=h0,
                                    OmL=OmL,
-                                   w=w,
+                                   w0=w0,
+                                   wa=wa,
                                    omega=omega_X,
                                    **kwargs_local)
 
@@ -200,12 +201,13 @@ def chi2_quasars(x,
                                     z=qso_z_arr,
                                     h=h0,
                                     OmL=OmL,
-                                    w=w,
+                                    w0=w0,
+                                    wa=wa,
                                     omega=omega_UV,
                                     **kwargs_local)
         # print(np.sum(np.abs(logPggX_arr)))
         # print(np.sum(np.abs(logPggUV_arr)))
-        DL_arr = tau_at_z_vec(qso_z_arr, h0, OmL, w) * \
+        DL_arr = tau_at_z_vec(qso_z_arr, h0, OmL, w0, wa) * \
             (1.+qso_z_arr) * _Mpc_over_cm_  # [cm]
         mu_th_arr = 2.*(qso_gamma-1)*log10(DL_arr) + logPggX_arr - \
             qso_gamma*logPggUV_arr + qso_beta + \
@@ -244,7 +246,8 @@ def chi2_quasars(x,
                                    z=z,
                                    h=h0,
                                    OmL=OmL,
-                                   w=w,
+                                   w0=w0,
+                                   wa=wa,
                                    omega=omega_X,
                                    **kwargs_local)
 
@@ -253,11 +256,12 @@ def chi2_quasars(x,
                                     z=z,
                                     h=h0,
                                     OmL=OmL,
-                                    w=w,
+                                    w0=w0,
+                                    wa=wa,
                                     omega=omega_UV,
                                     **kwargs_local)
 
-            DL = tau_at_z(z, h0, OmL, w) * (1+z) * _Mpc_over_cm_  # [cm]
+            DL = tau_at_z(z, h0, OmL, w0, wa) * (1+z) * _Mpc_over_cm_  # [cm]
             mu_th = 2.*(qso_gamma-1)*log10(DL) + logPggX - \
                 qso_gamma*logPggUV + qso_beta + \
                 (qso_gamma-1)*log10(4.*np.pi)
@@ -284,7 +288,7 @@ def chi2_BOSSDR12(x, data=None):
     Computes BOSSDR12 chi2. data must be equal to (BOSS_rsfid, BOSS_meas_z, BOSS_meas_dM, BOSS_meas_Hz, BOSS_cov, BOSS_icov, BOSS_cov_logdet)
     """
 
-    (OmL, h0, w, rs) = x
+    (OmL, h0, w0, wa, rs) = x
     BOSS_rsfid, BOSS_meas_z, BOSS_meas_dM, BOSS_meas_Hz, _, BOSS_icov, BOSS_cov_logdet = data
 
     chi2 = 0.
@@ -292,8 +296,8 @@ def chi2_BOSSDR12(x, data=None):
 
     for i, z in enumerate(BOSS_meas_z):
 
-        DM_at_z = tau_at_z(z, h0, OmL, w)  # comoving
-        H_at_z_val = H_at_z(z, h0, OmL, w, unit='SI')  # in km/s/Mpc
+        DM_at_z = tau_at_z(z, h0, OmL, w0, wa)  # comoving
+        H_at_z_val = H_at_z(z, h0, OmL, w0, wa, unit='SI')  # in km/s/Mpc
 
         theo_DM_rdfid_by_rd_in_Mpc = DM_at_z / rs * BOSS_rsfid
         theo_H_rd_by_rdfid = H_at_z_val * rs / BOSS_rsfid
@@ -321,13 +325,13 @@ def chi2_BAOlowz(x, data=None):
     Computes BAOlowz chi2. data must be equal to (BAOlowz_meas_exp, BAOlowz_meas_z, BAOlowz_meas_rs_dV, BAOlowz_meas_sigma, BAOlowz_meas_type)
     """
 
-    (OmL, h0, w, rs) = x
+    (OmL, h0, w0, wa, rs) = x
     _, BAOlowz_meas_z, BAOlowz_meas_rs_dV, BAOlowz_meas_sigma, BAOlowz_meas_type = data
 
     chi2 = 0.
     for i, z in enumerate(BAOlowz_meas_z):
-        da = dA_at_z(z, h0, OmL, w)
-        dr = z / H_at_z(z, h0, OmL, w)
+        da = dA_at_z(z, h0, OmL, w0, wa)
+        dr = z / H_at_z(z, h0, OmL, w0, wa)
         dv = (da * da * (1 + z) * (1 + z) * dr)**(1. / 3.)
 
         if BAOlowz_meas_type[i] == 3:
@@ -349,7 +353,7 @@ def chi2_Pantheon(x, data=None, vectorize=True, **kwargs):
     Computes Pantheon chi2. data must be equal to (PAN_lkl, PAN_cov_sqrt, PAN_cov_logdet). **kwargs are the arguments for LumMod.
     """
 
-    (ma, ga, OmL, h0, w, M0) = x
+    (ma, ga, OmL, h0, w0, wa, M0) = x
     PAN_lkl, PAN_cov_sqrt, PAN_cov_logdet = data
 
     chi2 = 0.
@@ -363,9 +367,10 @@ def chi2_Pantheon(x, data=None, vectorize=True, **kwargs):
         kwargs_local['method'] = 'vectorize'
         z_arr = PAN_lkl[:, 0]
         m_meas_arr = PAN_lkl[:, 1]
-        change_arr = LumMod(ma, ga, z_arr, h=h0, OmL=OmL, w=w, **kwargs_local)
+        change_arr = LumMod(ma, ga, z_arr, h=h0, OmL=OmL,
+                            w0=w0, wa=wa, **kwargs_local)
         muLCDM_vec = np.vectorize(muLCDM)
-        muLCDM_arr = muLCDM_vec(z_arr, h0, OmL, w)
+        muLCDM_arr = muLCDM_vec(z_arr, h0, OmL, w0, wa)
 
         residuals = muLCDM_arr - m_meas_arr + [M0]*len(z_arr) - change_arr
 
@@ -375,9 +380,10 @@ def chi2_Pantheon(x, data=None, vectorize=True, **kwargs):
             z = rec[0]
             m_meas = rec[1]
 
-            change = LumMod(ma, ga, z, h=h0, OmL=OmL, w=w, **kwargs)
+            change = LumMod(ma, ga, z, h=h0, OmL=OmL, w0=w0, wa=wa, **kwargs)
 
-            residuals.append(muLCDM(z, h0, OmL, w) - m_meas + M0 - change)
+            residuals.append(
+                muLCDM(z, h0, OmL, w0=w0, wa=wa) - m_meas + M0 - change)
 
     L_residuals = la.solve_triangular(
         PAN_cov_sqrt, residuals, lower=True, check_finite=False)
@@ -436,7 +442,7 @@ def chi2_clusters(pars, data=None, wanna_correct=True, fixed_Rvir=False, **kwarg
     Computes clusters chi2. data must be equal to (names, z_cls, DA_cls, err_cls, asymm_cls, ne0_cls, beta_cls, rc_out_cls, f_cls, rc_in_cls, Rvir_cls). **kwargs are the arguments of ADDMod.
     """
 
-    (ma, ga, OmL, h0, w) = pars
+    (ma, ga, OmL, h0, w0, wa) = pars
     names, z_cls, DA_cls, err_cls, asymm_cls, ne0_cls, beta_cls, rc_out_cls, f_cls, rc_in_cls, Rvir_cls = data
 
     chi2 = 0.
@@ -460,7 +466,7 @@ def chi2_clusters(pars, data=None, wanna_correct=True, fixed_Rvir=False, **kwarg
             # each cluster has its own virial radius, already computed under some fiducial LCDM assumption
             r_up = Rvir_cls[i]
 
-        factor = ADDMod(ma, ga, z, h0, OmL, w,
+        factor = ADDMod(ma, ga, z, h0, OmL, w0, wa,
                         ne0=ne0,
                         rc_outer=rc_outer,
                         beta_outer=beta_outer,
@@ -471,7 +477,7 @@ def chi2_clusters(pars, data=None, wanna_correct=True, fixed_Rvir=False, **kwarg
                         galaxy_index=i,
                         **kwargs)
 
-        DA_th = dA_at_z(z, h0, OmL, w) * factor
+        DA_th = dA_at_z(z, h0, OmL, w0, wa) * factor
 
         residuals.append(DA - DA_th)
 
@@ -509,7 +515,8 @@ def lnprob(x,
            use_TDCOSMO=False, ext_data=None,
            use_early=False, early_data=None,
            use_PlanckOmegaL=False, PlanckOmegaL_data=None,
-           use_Planckw=False, Planckw_data=None,
+           use_Planckw0=False, Planckw0_data=None,
+           use_Planckwa=False, Planckwa_data=None,
            use_clusters=False, clusters_data=None, wanna_correct=True, fixed_Rvir=False, clusters_kwargs=None,
            verbose=False):
     """
@@ -529,7 +536,8 @@ def lnprob(x,
     ga = 10**current_point['logga']
     OmL = current_point['OmL']
     h0 = current_point['h0']
-    w = current_point['w']
+    w0 = current_point['w0']
+    wa = current_point['wa']
 
     if use_Pantheon:
         M0 = current_point['M0']
@@ -542,7 +550,7 @@ def lnprob(x,
 
     # counting the number of experiments used
     experiments_counter = sum(
-        [use_SH0ES, use_Pantheon, use_quasars, use_TDCOSMO, use_early, use_PlanckOmegaL, use_Planckw, use_BOSSDR12, use_BAOlowz, use_clusters])
+        [use_SH0ES, use_Pantheon, use_quasars, use_TDCOSMO, use_early, use_PlanckOmegaL, use_Planckw0, use_Planckwa, use_BOSSDR12, use_BAOlowz, use_clusters])
     lnprob_each_chi2 = []
 
     if not is_Out_of_Range(x, keys, params):  # to avoid overflow
@@ -565,7 +573,7 @@ def lnprob(x,
         if use_Pantheon:
 
             this_chi2 = chi2_Pantheon(
-                (ma, ga, OmL, h0, w, M0), data=pan_data, **pan_kwargs)
+                (ma, ga, OmL, h0, w0, wa, M0), data=pan_data, **pan_kwargs)
             chi2 += this_chi2
             lnprob_each_chi2.append(this_chi2)
 
@@ -576,7 +584,7 @@ def lnprob(x,
         if use_quasars:
 
             this_chi2 = chi2_quasars(
-                (ma, ga, OmL, h0, w, qso_gamma, qso_beta, qso_delta),
+                (ma, ga, OmL, h0, w0, wa, qso_gamma, qso_beta, qso_delta),
                 data=quasars_data,
                 **quasars_kwargs)
             chi2 += this_chi2
@@ -613,18 +621,24 @@ def lnprob(x,
             if verbose > 2:
                 print('Planck OmegaL chi2=%f' % this_chi2)
 
-        if use_Planckw:
-            this_chi2 = chi2_Gaussian(w, data=Planckw_data)
+        if use_Planckw0:
+            this_chi2 = chi2_Gaussian(w0, data=Planckw0_data)
             chi2 += this_chi2
             lnprob_each_chi2.append(this_chi2)
-
             if verbose > 2:
-                print('Planck w chi2=%f' % this_chi2)
+                print('Planck w0 chi2=%f' % this_chi2)
+
+        if use_Planckwa:
+            this_chi2 = chi2_Gaussian(wa, data=Planckwa_data)
+            chi2 += this_chi2
+            lnprob_each_chi2.append(this_chi2)
+            if verbose > 2:
+                print('Planck wa chi2=%f' % this_chi2)
 
         # BOSS DR12
         if use_BOSSDR12:
 
-            this_chi2 = chi2_BOSSDR12((OmL, h0, w, rs), data=boss_data)
+            this_chi2 = chi2_BOSSDR12((OmL, h0, w0, wa, rs), data=boss_data)
             chi2 += this_chi2
             lnprob_each_chi2.append(this_chi2)
 
@@ -634,7 +648,7 @@ def lnprob(x,
         # BAOlowz (6DFs + BOSS DR7 MGS, called smallz in MontePython)
         if use_BAOlowz:
 
-            this_chi2 = chi2_BAOlowz((OmL, h0, w, rs), data=bao_data)
+            this_chi2 = chi2_BAOlowz((OmL, h0, w0, wa, rs), data=bao_data)
             chi2 += this_chi2
             lnprob_each_chi2.append(this_chi2)
 
@@ -644,7 +658,7 @@ def lnprob(x,
         # clusters
         if use_clusters:
 
-            this_chi2 = chi2_clusters((ma, ga, OmL, h0, w), data=clusters_data,
+            this_chi2 = chi2_clusters((ma, ga, OmL, h0, w0, wa), data=clusters_data,
                                       wanna_correct=wanna_correct, fixed_Rvir=fixed_Rvir, **clusters_kwargs)
             chi2 += this_chi2
             lnprob_each_chi2.append(this_chi2)
