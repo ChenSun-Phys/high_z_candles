@@ -34,7 +34,7 @@ Mpc_times_eV = Mpc_times_GeV/GeV_over_eV  # Mpc*eV conversion
 
 # FUNCTIONS:
 
-def Ekernel(Omega_L, z):
+def Ekernel(Omega_L, z, w=-1.):
     """
     E(z) kernel.
 
@@ -44,21 +44,22 @@ def Ekernel(Omega_L, z):
 
     Omega_m = 1. - Omega_L
 
-    return sqrt(Omega_L + Omega_m*(1. + z)**3.)
+    return sqrt(Omega_L*(1.+z)**(3.*w+3.) + Omega_m*(1. + z)**3.)
 
 
-def DC(z, h=0.7, Omega_L=0.7):
+def DC(z, h=0.7, Omega_L=0.7, w=-1.):
     """
     Comoving distance [Mpc].
 
     z : redshift
     h : reduced Hubble parameter H0/100 [km/s/Mpc] (default: 0.7)
     Omega_L : cosmological constant fractional density (default: 0.7)
+    w: eos of DE
     """
 
     dH = (c0*1.e-3)/(100.*h)  # Hubble distance [Mpc]
 
-    def integrand(z): return 1./Ekernel(Omega_L, z)
+    def integrand(z): return 1./Ekernel(Omega_L, z, w)
     integral = quad(integrand, 0., z)[0]
 
     return dH*integral
@@ -71,6 +72,7 @@ def igm_Psurv(ma, g, z,
               mg=3.e-15,
               h=0.7,
               Omega_L=0.7,
+              w=-1.,
               axion_ini_frac=0.,
               smoothed=False,
               redshift_dependent=True,
@@ -89,6 +91,7 @@ def igm_Psurv(ma, g, z,
     mg : photon mass [eV] (default: 3.e-15)
     h : reduced Hubble parameter H0/100 [km/s/Mpc] (default: 0.7)
     Omega_L : cosmological constant fractional density (default: 0.7)
+    w: eos of DE
     axion_ini_frac : the initial intensity fraction of axions: I_axion/I_photon (default: 0.)
     smoothed : whether sin^2 in conversion probability is smoothed out [bool] (default: False)
     redshift_dependent : whether the IGM background depends on redshift [bool] (default: True)
@@ -118,11 +121,12 @@ def igm_Psurv(ma, g, z,
             # constructing integrand
             if prob_func == 'norm_log':
                 integrand = log(np.abs(1 - 1.5*Pga(zArr))) / \
-                    Ekernel(Omega_L, zArr)
+                    Ekernel(Omega_L, zArr, w=w)
             elif prob_func == 'small_P':
-                integrand = -1.5*Pga(zArr) / Ekernel(Omega_L, zArr)
+                integrand = -1.5*Pga(zArr) / Ekernel(Omega_L, zArr, w=w)
             elif prob_func == 'full_log':
-                integrand = log(1 - 1.5*Pga(zArr)) / Ekernel(Omega_L, zArr)
+                integrand = log(1 - 1.5*Pga(zArr)) / \
+                    Ekernel(Omega_L, zArr, w=w)
             else:
                 raise ValueError(
                     "Argument 'prob_func'={} must be equal to either 'small_P', 'full_log', or 'norm_log'. It's neither.".format(prob_func))
@@ -146,11 +150,12 @@ def igm_Psurv(ma, g, z,
             # constructing integrand
             if prob_func == 'norm_log':
                 integrand = log(np.abs(1 - 1.5*Pga(zArr))) / \
-                    Ekernel(Omega_L, zArr)
+                    Ekernel(Omega_L, zArr, w=w)
             elif prob_func == 'small_P':
-                integrand = -1.5*Pga(zArr) / Ekernel(Omega_L, zArr)
+                integrand = -1.5*Pga(zArr) / Ekernel(Omega_L, zArr, w=w)
             elif prob_func == 'full_log':
-                integrand = log(1 - 1.5*Pga(zArr)) / Ekernel(Omega_L, zArr)
+                integrand = log(1 - 1.5*Pga(zArr)) / \
+                    Ekernel(Omega_L, zArr, w=w)
             else:
                 raise ValueError(
                     "Argument 'prob_func'={} must be equal to either 'small_P', 'full_log', or 'norm_log'. It's neither.".format(prob_func))
@@ -165,12 +170,13 @@ def igm_Psurv(ma, g, z,
             # constructing integrand
             if prob_func == 'norm_log':
                 def integrand(zz): return log(
-                    np.abs(1 - 1.5*Pga(zz))) / Ekernel(Omega_L, zz)
+                    np.abs(1 - 1.5*Pga(zz))) / Ekernel(Omega_L, zz, w=w)
             elif prob_func == 'small_P':
-                def integrand(zz): return -1.5*Pga(zz) / Ekernel(Omega_L, zz)
+                def integrand(zz): return -1.5*Pga(zz) / \
+                    Ekernel(Omega_L, zz, w=w)
             elif prob_func == 'full_log':
                 def integrand(zz): return log(
-                    1 - 1.5*Pga(zz)) / Ekernel(Omega_L, zz)
+                    1 - 1.5*Pga(zz)) / Ekernel(Omega_L, zz, w=w)
             else:
                 raise ValueError(
                     "Argument 'prob_func'={} must be equal to either 'small_P', 'full_log', or 'norm_log'. It's neither.".format(prob_func))
@@ -183,7 +189,7 @@ def igm_Psurv(ma, g, z,
                 raise Exception(
                     "only 'vectorize' supports z array for now and you chose 'old'")
 
-            y = DC(z, h=h, Omega_L=Omega_L)  # computing comoving distance
+            y = DC(z, h=h, Omega_L=Omega_L, w=w)  # computing comoving distance
             argument = -1.5*(y/s)*Pga(z)  # argument of exponential
 
         else:
@@ -195,7 +201,7 @@ def igm_Psurv(ma, g, z,
             raise Exception(
                 "only redshift+vectorize supports z array for now and you chose redshift independent scheme")
 
-        y = DC(z, h=h, Omega_L=Omega_L)  # computing comoving distance
+        y = DC(z, h=h, Omega_L=Omega_L, w=w)  # computing comoving distance
         # z-independent probability conversion in one domain
         P = P0(ma, g, s, B=B, omega=omega, mg=mg, smoothed=smoothed)
         argument = -1.5*(y/s)*P  # argument of exponential

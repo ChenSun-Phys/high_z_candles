@@ -76,7 +76,7 @@ if __name__ == '__main__':
     params, keys, keys_fixed = fill_mcmc_parameters(
         os.path.join(directory, 'log.param'))
 
-    # test data authenticity
+    # test data integrity
     if len(keys) != len(samples[0]):
         raise Exception(
             'log.param and h5 files are not consistent. Data is compromised. Quit analyzing.')
@@ -90,6 +90,7 @@ if __name__ == '__main__':
     plt.figure(0)
     # labels = keys
     # labels = [r"$\Omega_\Lambda$", r"$h$", r"$\log\ m_a$", r"$\log\ g_a$"]
+    # labels = [r"$\Omega_\Lambda$"]
     labels = []
     print("keys:", keys)
     if 'OmL' in keys:
@@ -113,6 +114,7 @@ if __name__ == '__main__':
     if 'qso_delta' in keys:
         labels.append(r"$\delta$")
 
+    print("labels:", labels)
     figure = corner.corner(samples,
                            labels=labels,
                            quantiles=[0.16, 0.5, 0.84],
@@ -123,12 +125,21 @@ if __name__ == '__main__':
 
     plt.savefig(pltpath(directory))
 
-    # focusing on ma-ga
+    # define your custom 2D posterior
 
-    reduced_labels = [r"$\log\ m_a$", r"$\log\ g_a$"]
+    # # axion analysis ma-ga
+    # reduced_labels = [r"$\log\ m_a$", r"$\log\ g_a$"]
+    # # reduced_samples = samples[:, 2:4]
     # reduced_samples = samples[:, 2:4]
-    reduced_samples = samples[:, 2:4]
+
+    # wCDM analysis
+    # reduced_labels = [r"$\log\ m_a$", r"$\log\ g_a$"]
+    reduced_labels = [r"$\Omega_\Lambda$", r"$w$"]
+    reduced_samples = samples[:, 0:3:2]
+    # reduced_samples = reduced_samples[:, 0:2]
+
     reduced_dim = len(reduced_labels)
+    print(reduced_dim)
 
     # focusing on one contour 2sigma
     plt.figure(1)

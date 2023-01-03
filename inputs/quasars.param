@@ -38,6 +38,21 @@ OmegaL_mean = 0.6847
 OmegaL_sig = 0.0073
 
 #
+# Planck 2018 prior on w,
+# !!!! careful should be used to avoid double counting BAO and SN !!!!
+#
+# Planck 2018 + BAO + SN
+use_Planckw = True
+w_mean = -0.961
+w_sig = 0.077
+# 
+# Planck 2018 + BAO/RSD + Weak Lensing
+# w_mean = -0.76
+# w_sig = 0.2
+
+
+
+#
 # Pantheon SNe
 #
 use_Pantheon = False
@@ -142,10 +157,12 @@ ne_IGM [1/cm3] = 1.6e-8
 # param = [init, low, up, sigma]
 #
 OmL	  = [0.6847,   0.2, 0.75,  0.015]
-# h0        = [  0.73,   0.6,  0.8,    0.0]
-h0        = [  0.67,   0.6,  0.8,    0.0]
-logma	  = [   -14,   -17,  -11,    1.0]
-logga	  = [   -13,   -18,  -8.,   0.20]
+h0        = [  0.73,   0.6,  0.8,   0.02]
+w	  = [    0.,   -1.,   1.,    0.1]
+logma	  = [   -15,   -17,  -11,    0.0]
+logga	  = [   -17,   -18,  -8.,   0.0]
+# logma	  = [   -14,   -17,  -11,    1.0]
+# logga	  = [   -13,   -18,  -8.,   0.20]
 # M0 	  = [ -19.3,   -21,  -18,    0.1]
 # rs	  = [147.78,  120., 160.,     1.]
 qso_gamma = [   0.7,   0.1,  1.0,   0.07]
