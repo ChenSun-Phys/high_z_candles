@@ -1,0 +1,15 @@
+# usage: rsync -av --filter=':- .rsync_exclude' <source> <dest>
+*pyc
+*h5
+*~
+.ipynb_checkpoints
+__pycache__
+.git
+*aux
+*blg
+*log
+*out
+\#*
+.#*
+*.gz
+*~
