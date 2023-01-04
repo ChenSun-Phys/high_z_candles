@@ -1,0 +1,7 @@
+*pyc
+*h5
+*~
+.ipynb_checkpoints
+chains
+__pycache__
+.git

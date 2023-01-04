@@ -120,25 +120,70 @@ if __name__ == '__main__':
     # # focusing on ma-ga
     # plt.figure(1)
     # reduced_labels = [r"$\log\ m_a$", r"$\log\ g_a$"]
-    # reduced_samples = samples[:, 2:4]
-    # reduced_dim = len(reduced_labels)
+    reduced_labels = [r"$a_2$", r"$a_3$"]
+    reduced_samples = samples[:, 0:2]
+    reduced_dim = len(reduced_labels)
 
-    # figure = corner.corner(reduced_samples,
-    #                        labels=reduced_labels,
-    #                        quantiles=[0.16, 0.5, 0.84],
-    #                        color='r', show_titles=True,
-    #                        plot_datapoints=False,
-    #                        plot_density=False,
-    #                        # levels=[1.-np.exp(-(2.)**2 /2.)],
-    #                        levels=[0.95],
-    #                        title_kwargs={"fontsize": 12},
-    #                        hist_kwargs={'color': None})
-    # axes = np.array(figure.axes).reshape((reduced_dim, reduced_dim))
+    # focusing on one contour 2sigma
+    plt.figure(1)
+    figure = corner.corner(reduced_samples,
+                           labels=reduced_labels,
+                           quantiles=[0.16, 0.5, 0.84],
+                           color='r', show_titles=True,
+                           plot_datapoints=False,
+                           plot_density=False,
+                           # levels=[1.-np.exp(-(2.)**2 /2.)],
+                           levels=[0.95],
+                           title_kwargs={"fontsize": 12},
+                           hist_kwargs={'color': None})
+    axes = np.array(figure.axes).reshape((reduced_dim, reduced_dim))
 
-    # p = (figure.axes)[2].collections[0].get_paths()[0]
-    # v = p.vertices
+    p = (figure.axes)[2].collections[0].get_paths()[0]
+    v = p.vertices
 
-    # # saving the points of the 95% C.R. contour
-    # np.savetxt(pltpath(directory, head='corner_pts', ext='.txt'), v)
+    # saving the points of the 95% C.R. contour
+    np.savetxt(pltpath(directory, head='corner_pts_2sigma_', ext='.txt'), v)
 
-    # plt.savefig(pltpath(directory, head='custom'))
+    plt.savefig(pltpath(directory, head='custom'))
+
+    # other CL
+    # focusing on one contour 3sigma
+    plt.figure(2)
+    figure = corner.corner(reduced_samples,
+                           labels=reduced_labels,
+                           quantiles=[0.16, 0.5, 0.84],
+                           color='r', show_titles=True,
+                           plot_datapoints=False,
+                           plot_density=False,
+                           # levels=[1.-np.exp(-(2.)**2 /2.)],
+                           levels=[0.997],
+                           title_kwargs={"fontsize": 12},
+                           hist_kwargs={'color': None})
+    axes = np.array(figure.axes).reshape((reduced_dim, reduced_dim))
+
+    p = (figure.axes)[2].collections[0].get_paths()[0]
+    v = p.vertices
+
+    # saving the points of the 99.7% C.R. contour
+    np.savetxt(pltpath(directory, head='corner_pts_3sigma_', ext='.txt'), v)
+
+    # other CL
+    # focusing on one contour 1sigma
+    plt.figure(3)
+    figure = corner.corner(reduced_samples,
+                           labels=reduced_labels,
+                           quantiles=[0.16, 0.5, 0.84],
+                           color='r', show_titles=True,
+                           plot_datapoints=False,
+                           plot_density=False,
+                           # levels=[1.-np.exp(-(2.)**2 /2.)],
+                           levels=[0.68],
+                           title_kwargs={"fontsize": 12},
+                           hist_kwargs={'color': None})
+    axes = np.array(figure.axes).reshape((reduced_dim, reduced_dim))
+
+    p = (figure.axes)[2].collections[0].get_paths()[0]
+    v = p.vertices
+
+    # saving the points of the 68% C.R. contour
+    np.savetxt(pltpath(directory, head='corner_pts_1sigma_', ext='.txt'), v)
