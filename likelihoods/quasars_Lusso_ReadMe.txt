@@ -61,10 +61,10 @@ Byte-by-byte Description of file: table3.dat
   29- 38  F10.6 deg       RAdeg   Right ascension (J2000.0)
   40- 50  F11.7 deg       DEdeg   Declination (J2000.0)
   52- 57  F6.4  ---       z       Redshift
-  61- 69  F9.5  [mW/m2]   logFUV  Rest-frame fluxes at 2500 Angstroem (1)
-  73- 79  F7.5  [mW/m2] e_logFUV  Error on rest-frame fluxes at 2500 Angstroem
-  83- 91  F9.5  [mW/m2]   logFX   Rest-frame fluxes at 2keV (1)
-  95-101  F7.5  [mW/m2] e_logFX   Error on rest-frame fluxes at 2keV
+  61- 69  F9.5  [mW/m2/Hz]   logFUV  Rest-frame fluxes at 2500 Angstroem (1)
+  73- 79  F7.5  [mW/m2/Hz] e_logFUV  Error on rest-frame fluxes at 2500 Angstroem
+  83- 91  F9.5  [mW/m2/Hz]   logFX   Rest-frame fluxes at 2keV (1)
+  95-101  F7.5  [mW/m2/Hz] e_logFX   Error on rest-frame fluxes at 2keV
      105  I1    ---       Group   [1/7] Group numbering for each sub-sample (2)
  113-119  F7.5  ---       gammax  Photon index
  123-129  F7.5  ---     e_gammax  Error on the photon index

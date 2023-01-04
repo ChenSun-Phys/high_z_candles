@@ -1,16 +1,8 @@
 #######################################################
 ###       Code for emcee cosmo_axions chains        ###
-###               by Chen Sun, 2020                 ###
+###               by Chen Sun, 2020, 2022           ###
 ###         and Manuel A. Buen-Abad, 2020           ###
 #######################################################
-
-try:
-    import matplotlib
-    matplotlib.use('Agg')
-    import matplotlib.pyplot as plt
-    from datetime import datetime
-except:
-    pass
 
 import os
 import errno
@@ -77,6 +69,12 @@ def dir_init(path):
 
 
 def fill_mcmc_parameters(path):
+    """The main routine that parses the param file
+
+    :param path: the path to the param file
+
+    """
+
     res = od()
     keys = []
     fixed_keys = []
@@ -92,10 +90,11 @@ def fill_mcmc_parameters(path):
                 try:
                     res[key] = float(words[1])
                 except:
-
-                    # print line, words, key
-
-                    res[key] = (words[1]).strip()
+                    try:
+                        res[key] = (words[1]).strip()
+                    except IndexError:
+                        print(key)
+                        print(words)
                     # not a number, start parsing
                     # store tuple
                     if res[key][0] == '(' and res[key][-1] == ')':
@@ -113,6 +112,8 @@ def fill_mcmc_parameters(path):
                         else:
                             res[key+' fixed'] = res[key][0]
                             fixed_keys.append(str(key))
+
+                    # booleans get treated separately
                     elif res[key] == 'TRUE' or res[key] == 'True' or res[key] == 'true' or res[key] == 'T' or res[key] == 'yes' or res[key] == 'Y' or res[key] == 'Yes' or res[key] == 'YES':
                         res[key] = True
 
@@ -121,45 +122,32 @@ def fill_mcmc_parameters(path):
     return (res, keys, fixed_keys)
 
 
-if __name__ == '__main__':
-    warnings.filterwarnings('error', 'overflow encountered')
-    warnings.filterwarnings('error', 'invalid value encountered')
-    argv = sys.argv[1:]
-    help_msg = 'python %s -N <number_of_steps> -o <output_folder> -L <likelihood_directory> -i <param_file> -w <number_of_walkers>' % (
-        sys.argv[0])
-    try:
-        opts, args = getopt.getopt(argv, 'hN:o:L:i:w:')
-    except getopt.GetoptError:
-        raise Exception(help_msg)
-    flgN = False
-    flgo = False
-    flgL = False
-    flgi = False
-    flgw = False
-    for opt, arg in opts:
-        if opt == '-h':
-            raise Exception(help_msg)
-        elif opt == '-N':
-            chainslength = int(arg)
-            flgN = True
-        elif opt == '-o':
-            directory = arg
-            flgo = True
-        elif opt == '-L':
-            dir_lkl = arg
-            flgL = True
-        elif opt == '-i':
-            path_of_param = arg
-            flgi = True
-        elif opt == '-w':
-            number_of_walkers = int(arg)
-            flgw = True
-    if not (flgN and flgo and flgL and flgi and flgw):
-        raise Exception(help_msg)
-
 ##########################
 # initialize
 ##########################
+# class Main(object):
+#     """The class wrapper to get around the pickle
+
+#     """
+#     def __init__(self):
+#         pass
+#         # super(Main, self).__init__()
+
+
+def main(chainslength,
+         directory,
+         dir_lkl,
+         path_of_param,
+         number_of_walkers):
+    """The main routine of the run. 
+
+    :param chainslength: the length of the chain. 
+    :param directory: the directory of the output.
+    :param dir_lkl: the directory of the likelihood.
+    :param path_of_param: the path of the parameter file
+    :param number_of_walkers: number of walkers
+
+    """
 
     # init the dir
     dir_init(directory)
@@ -178,7 +166,27 @@ if __name__ == '__main__':
         from shutil import copyfile
         copyfile(path_of_param, os.path.join(directory, 'log.param'))
 
+    # determine if photon survival needs to be comptued
+    # this will add some significant time cost
+    if 'logga' not in keys:
+        skip_LumMod = True
+        print('ga is not being scanned, skipping LumMod()')
+    else:
+        skip_LumMod = False
+        print('ga is being scanned, so LumMod() needs to be computed.')
+
     # fill up defaults
+    try:
+        params['use_loglkl']
+    except KeyError:
+        params['use_loglkl'] = True
+
+    # global use_loglkl
+    # if params['use_loglkl']:
+    #     use_loglkl = True
+    # else:
+    #     use_loglkl = False
+
     try:
         params['debug']
     except KeyError:
@@ -255,6 +263,36 @@ if __name__ == '__main__':
        params['use_early'] is not False:
         raise Exception('Do you want early? Please check input.param\
                         and specify the use_early parameter with\
+                        True or False')
+
+    try:
+        params['use_PlanckOmegaL']
+    except KeyError:
+        params['use_PlanckOmegaL'] = False
+    if params['use_PlanckOmegaL'] is not True and \
+       params['use_PlanckOmegaL'] is not False:
+        raise Exception('Do you want Planck prior on OmegaLambda? Please check input.param\
+                        and specify the use_PlanckOmegaL parameter with\
+                        True or False')
+
+    try:
+        params['use_Planckw0']
+    except KeyError:
+        params['use_Planckw0'] = False
+    if params['use_Planckw0'] is not True and \
+       params['use_Planckw0'] is not False:
+        raise Exception('Do you want Planck prior on OmegaLambda? Please check input.param\
+                        and specify the use_Planckw0 parameter with\
+                        True or False')
+
+    try:
+        params['use_Planckwa']
+    except KeyError:
+        params['use_Planckwa'] = False
+    if params['use_Planckwa'] is not True and \
+       params['use_Planckwa'] is not False:
+        raise Exception('Do you want Planck prior on OmegaLambda? Please check input.param\
+                        and specify the use_Planckwa parameter with\
                         True or False')
 
     try:
@@ -504,7 +542,8 @@ if __name__ == '__main__':
                   'redshift_dependent': redshift_dependent,
                   'method': method_IGM,
                   'prob_func': prob_func_IGM,
-                  'Nz': Nz_IGM}
+                  'Nz': Nz_IGM,
+                  'skip_LumMod': skip_LumMod}
 
     quasars_kwargs = {'B': B_IGM,
                       'mg': omega_plasma(ne_IGM),
@@ -518,7 +557,8 @@ if __name__ == '__main__':
                       'method': method_IGM,
                       'prob_func': prob_func_IGM,
                       'Nz': Nz_IGM,
-                      'vectorize': quasars_vectorize}
+                      'vectorize': quasars_vectorize,
+                      'skip_LumMod': skip_LumMod}
 
     clusters_kwargs = {'omegaX': omegaX,
                        'omegaCMB': omegaCMB,
@@ -559,23 +599,6 @@ if __name__ == '__main__':
         clusters_kwargs['varying_ICMdomain'] = True
         # need to postpone the draw for we don't know the number of galaxies yet
 
-        # # TODO: get # of galaxies
-        # names = clusters_data[0]
-        # number_of_clusters = len(names)
-
-        # # make 38 draws
-        # lst_r_Arr_raw = []
-        # lst_L_Arr_raw = []
-        # for i in range(number_of_gc):
-        #     L_Arr_raw = L_ICM_draw(n=params['ICM_B_power'], Lmax=params['ICM_B_Lmax'],
-        #                            Lmin=params['ICM_B_Lmin'], size=int(params['ICM_B_num_of_dom_init_guess']))
-        #     r_Arr_raw = np.cumsum(L_Arr_raw)
-        #     # save
-        #     lst_r_Arr_raw.append(r_Arr_raw)
-        #     lst_L_Arr_raw.append(L_Arr_raw)
-        # clusters_kwargs['lst_r_Arr_raw'] = lst_r_Arr_raw
-        # clusters_kwargs['lst_L_Arr_raw'] = lst_L_Arr_raw
-
 
 ##########################
 # load up likelihoods
@@ -583,6 +606,7 @@ if __name__ == '__main__':
 ##########################
 
     experiments = []  # a list of shorthand names for the experiments
+    # Note the following order needs to match with chi2.py inside lnprob()
 
     # load SH0ES
     if params['use_SH0ES'] is True:
@@ -594,16 +618,6 @@ if __name__ == '__main__':
     else:
         shoes_data = None
 
-    # load quasars
-    if params['use_quasars'] is True:
-        quasars_data = data.load_quasars(dir_lkl,
-                                         params['quasars_lkl'],
-                                         z_low=quasars_z_low,
-                                         z_up=quasars_z_up)
-        experiments.append('quasars')
-    else:
-        quasars_data = None
-
     # load Pantheon
     if params['use_Pantheon'] is True:
         pan_data = data.load_pantheon(dir_lkl,
@@ -614,6 +628,16 @@ if __name__ == '__main__':
         experiments.append('pantheon')
     else:
         pan_data = None
+
+    # load quasars
+    if params['use_quasars'] is True:
+        quasars_data = data.load_quasars(dir_lkl,
+                                         params['quasars_lkl'],
+                                         z_low=quasars_z_low,
+                                         z_up=quasars_z_up)
+        experiments.append('quasars')
+    else:
+        quasars_data = None
 
     # load BOSS DR12
     if params['use_BOSSDR12'] is True:
@@ -643,9 +667,32 @@ if __name__ == '__main__':
     # load rsdrag data
     if params['use_early'] is True:
         early_data = (params['rsdrag_mean'], params['rsdrag_sig'])
-        experiments.append('planck')
+        experiments.append('PlanckRs')
     else:
         early_data = None
+
+    # load Planck's prior on OmegaLambda
+    if params['use_PlanckOmegaL'] is True:
+        PlanckOmegaL_data = (params['OmegaL_mean'], params['OmegaL_sig'])
+        experiments.append('PlanckOmegaL')
+    else:
+        PlanckOmegaL_data = None
+
+    # load Planck's prior on w0
+    if params['use_Planckw0'] is True:
+        Planckw0_data = (params['w0_mean'], params['w0_sig'])
+        experiments.append('Planckw0')
+        print("!!! You asked to add prior on w0. Be extra careful when using this option, as the w0 prior is likely from Planck2018+BAO(+SNe). You should turn off Pantheon and BAO to avoid double counting !!!")
+    else:
+        Planckw0_data = None
+
+    # load Planck's prior on wa
+    if params['use_Planckwa'] is True:
+        Planckwa_data = (params['wa_mean'], params['wa_sig'])
+        experiments.append('Planckwa')
+        print("!!! You asked to add prior on wa. Be extra careful when using this option, as the wa prior is likely from Planck2018+BAO(+SNe). You should turn off Pantheon and BAO to avoid double counting !!!")
+    else:
+        Planckwa_data = None
 
     # load clusters ADD
     if params['use_clusters'] is True:
@@ -680,33 +727,6 @@ if __name__ == '__main__':
             clusters_kwargs['lst_sintheta_Arr_raw'] = lst_sintheta_Arr_raw
             print('ICM magnetic domain realizations made.')
 
-        # print('!!!!%s' % (clusters_kwargs))
-
-        # save the realizations for debug purpose
-        # if params['varying_ICMdomain']:
-        #     try:
-        #         # make sure it's not specified in the param file
-        #         params['lst_r_Arr_raw']
-        #         params['lst_L_Arr_raw']
-        #         clusters_kwargs['lst_r_Arr_raw'] = params['lst_r_Arr_raw']
-        #         clusters_kwargs['lst_L_Arr_raw'] = params['lst_L_Arr_raw']
-        #         clusters_kwargs['varying_ICMdomain'] = True
-
-        #     except KeyError:
-        #         # save it
-        #         log_path = os.path.join(directory, 'log.param')
-        #         with open(log_path, 'a+') as f:
-        #             f.write('\n')
-        #             f.write('r_Arr_raw = %s' %
-        #                     (tuple(clusters_kwargs['lst_r_Arr_raw']),))
-        #             f.write('\n')
-        #             f.write('L_Arr_raw = %s' %
-        #                     (tuple(clusters_kwargs['lst_L_Arr_raw']),))
-        #         # if params['verbose'] > 1:
-        #         #     print('r_Arr_raw = %s' %
-        #         #           (tuple(clusters_kwargs['r_Arr_raw']),))
-        #         #     print('L_Arr_raw = %s' %
-        #         #           (tuple(clusters_kwargs['L_Arr_raw']),))
     else:
         clusters_data = None
 
@@ -715,6 +735,7 @@ if __name__ == '__main__':
 # emcee related deployment
 ##########################
 
+    global lnprob
 
     def lnprob(x):
         """
@@ -730,6 +751,9 @@ if __name__ == '__main__':
                            use_quasars=params['use_quasars'], quasars_data=quasars_data, quasars_kwargs=quasars_kwargs,
                            use_TDCOSMO=params['use_TDCOSMO'], ext_data=ext_data,
                            use_early=params['use_early'], early_data=early_data,
+                           use_PlanckOmegaL=params['use_PlanckOmegaL'], PlanckOmegaL_data=PlanckOmegaL_data,
+                           use_Planckw0=params['use_Planckw0'], Planckw0_data=Planckw0_data,
+                           use_Planckwa=params['use_Planckwa'], Planckwa_data=Planckwa_data,
                            use_clusters=params['use_clusters'], clusters_data=clusters_data, wanna_correct=wanna_correct, fixed_Rvir=fixed_Rvir, clusters_kwargs=clusters_kwargs,
                            verbose=params['verbose'])
 
@@ -824,3 +848,50 @@ if __name__ == '__main__':
 
     print("Mean acceptance fraction: {0:.3f}".format(
         np.mean(sampler.acceptance_fraction)))
+
+
+###############################
+# run time
+###############################
+if __name__ == '__main__':
+    warnings.filterwarnings('error', 'overflow encountered')
+    warnings.filterwarnings('error', 'invalid value encountered')
+    argv = sys.argv[1:]
+    help_msg = 'python %s -N <number_of_steps> -o <output_folder> -L <likelihood_directory> -i <param_file> -w <number_of_walkers>' % (
+        sys.argv[0])
+    try:
+        opts, args = getopt.getopt(argv, 'hN:o:L:i:w:')
+    except getopt.GetoptError:
+        raise Exception(help_msg)
+    flgN = False
+    flgo = False
+    flgL = False
+    flgi = False
+    flgw = False
+    for opt, arg in opts:
+        if opt == '-h':
+            raise Exception(help_msg)
+        elif opt == '-N':
+            chainslength = int(arg)
+            flgN = True
+        elif opt == '-o':
+            directory = arg
+            flgo = True
+        elif opt == '-L':
+            dir_lkl = arg
+            flgL = True
+        elif opt == '-i':
+            path_of_param = arg
+            flgi = True
+        elif opt == '-w':
+            number_of_walkers = int(arg)
+            flgw = True
+    if not (flgN and flgo and flgL and flgi and flgw):
+        raise Exception(help_msg)
+
+    # the payload
+    main(chainslength,
+         directory,
+         dir_lkl,
+         path_of_param,
+         number_of_walkers)

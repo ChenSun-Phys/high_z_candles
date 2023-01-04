@@ -1,3 +1,4 @@
+# usage: rsync -av --filter=':- .rsync_exclude' <source> <dest>
 *pyc
 *h5
 *~
@@ -5,3 +6,12 @@
 chains
 __pycache__
 .git
+*aux
+*blg
+*log
+*out
+\#*
+.#*
+*.gz
+*~
+

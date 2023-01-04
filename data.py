@@ -173,7 +173,7 @@ def load_pantheon(dir_lkl, Pantheon_lkl, Pantheon_covmat, Pantheon_subset, verbo
     """
     Load Pantheon.
 
-    return: PAN_lkl, PAN_cov
+    return: PAN_lkl, PAN_cov_sqrt, PAN_cov_logdet
     """
 
     PAN_lkl = np.loadtxt(os.path.join(dir_lkl, Pantheon_lkl),
@@ -202,16 +202,17 @@ def load_pantheon(dir_lkl, Pantheon_lkl, Pantheon_covmat, Pantheon_subset, verbo
     # end of choice
     PAN_cov = ne.evaluate("C00")
     PAN_cov += np.diag(PAN_lkl[:, 2]**2)
-    PAN_cov = la.cholesky(PAN_cov, lower=True, overwrite_a=True)
+    PAN_cov_sqrt = la.cholesky(PAN_cov, lower=True, overwrite_a=True)
+    _, PAN_cov_logdet = np.linalg.slogdet(PAN_cov)
 
-    return (PAN_lkl, PAN_cov)
+    return (PAN_lkl, PAN_cov_sqrt, PAN_cov_logdet)
 
 
 def load_boss_dr12(dir_lkl, BOSSDR12_rsfid, BOSSDR12_meas, BOSSDR12_covmat):
     """
     Load BOSS DR12.
 
-    return: BOSS_rsfid, BOSS_meas_z, BOSS_meas_dM, BOSS_meas_Hz, BOSS_cov, BOSS_icov
+    return: BOSS_rsfid, BOSS_meas_z, BOSS_meas_dM, BOSS_meas_Hz, BOSS_cov, BOSS_icov, BOSS_cov_logdet
     """
 
     BOSS_rsfid = BOSSDR12_rsfid
@@ -231,8 +232,9 @@ def load_boss_dr12(dir_lkl, BOSSDR12_rsfid, BOSSDR12_meas, BOSSDR12_covmat):
 
     BOSS_cov = np.loadtxt(os.path.join(dir_lkl, BOSSDR12_covmat))
     BOSS_icov = np.linalg.inv(BOSS_cov)
+    _, BOSS_cov_logdet = np.linalg.slogdet(BOSS_cov)
 
-    return (BOSS_rsfid, BOSS_meas_z, BOSS_meas_dM, BOSS_meas_Hz, BOSS_cov, BOSS_icov)
+    return (BOSS_rsfid, BOSS_meas_z, BOSS_meas_dM, BOSS_meas_Hz, BOSS_cov, BOSS_icov, BOSS_cov_logdet)
 
 
 def load_bao_lowz(dir_lkl, BAOlowz_lkl):
