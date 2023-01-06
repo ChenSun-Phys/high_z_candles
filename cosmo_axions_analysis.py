@@ -107,6 +107,10 @@ if __name__ == '__main__':
     # labels = [r"$\Omega_\Lambda$"]
     labels = []
     print("keys:", keys)
+    if 'a2' in keys:
+        labels.append(r"$a_2$")
+    if 'a3' in keys:
+        labels.append(r"$a_3$")
     if 'OmL' in keys:
         labels.append(r"$\Omega_\Lambda$")
     if 'h0' in keys:

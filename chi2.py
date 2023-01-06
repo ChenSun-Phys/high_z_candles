@@ -8,7 +8,7 @@ import numpy as np
 import scipy.linalg as la
 from numpy import pi, sqrt, log, log10, exp, power
 from cosmo import H_at_z, tau_at_z, dA_at_z, muLCDM, LumMod, ADDMod
-import data
+# import data
 
 _Mpc_over_cm_ = 3.0857e+24
 _Mpc_over_10pc_ = 1.e5
@@ -374,7 +374,7 @@ def chi2_Pantheon(x, data=None, vectorize=True, **kwargs):
         residuals.append(muLCDM(z, h0=h0, a2=a2, a3=a3) - m_meas + M0 - change)
 
     L_residuals = la.solve_triangular(
-        PAN_cov, residuals, lower=True, check_finite=False)
+        PAN_cov_sqrt, residuals, lower=True, check_finite=False)
     chi2 = np.dot(L_residuals, L_residuals)
 
     if use_loglkl:
