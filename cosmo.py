@@ -53,21 +53,24 @@ def H_at_z_exact(z, h0, OmL, unit='Mpc'):
     return res
 
 
-def H_at_z_naturallog(z, h0, a2, a3, unit='Mpc'):
+def H_at_z_naturallog(z, h0, a2, a3, a4, unit='Mpc'):
     """Hubble at z expanded with powers of ln(1+z).Rederived by hand for crosscheck. The conversion to 10 based expansion is 
     a2_naturalbase = a2_10base/ln(10), 
-    a3_naturalbase = a2_10base/ln(10)**2.
+    a3_naturalbase = a3_10base/ln(10)**2.
+    a4_naturalbase = a4_10base/ln(10)**3.
 
     :param z: redshift
     :param h0:  H in [100*km/s/Mpc]
     :param a2: the second coefficient of the log(1+z) expansion
     :param a3: the third coefficient of the log(1+z) expansion
+    :param a4: the fourth coefficient of the log(1+z) expansion    
     :param unit: flag to change the output unit
     :returns: H [1/Mpc] by default, or H [km/s/Mpc]
 
     """
     x = np.log(1.+z)
-    shape = (1.+z)**2 / (1. + (2.*a2-1.)*x + (3.*a3-a2)*x**2 - a3*x**3)
+    shape = (1.+z)**2 / (1. + (2.*a2-1.)*x + (3.*a3-a2)
+                         * x**2 + (4.*a4-a3)*x**3-a4*x**4)
     if unit == 'Mpc':
         res = h0*100.*shape/(_c_/1000.)
     else:
@@ -75,7 +78,7 @@ def H_at_z_naturallog(z, h0, a2, a3, unit='Mpc'):
     return res
 
 
-def H_at_z_cross_check(z, h0, a2, a3, unit='Mpc'):
+def H_at_z_cross_check(z, h0, a2, a3, a4, unit='Mpc'):
     """Hubble at z expanded with powers of log10(1+z)
 
     :param z: redshift
@@ -86,29 +89,38 @@ def H_at_z_cross_check(z, h0, a2, a3, unit='Mpc'):
     :returns: H [1/Mpc] by default, or H [km/s/Mpc]
 
     """
-    shape = -(1.+z)**2*np.log(10)**2/(-np.log(10)**2+np.log(10)*(-2.*a2+np.log(10))
-                                      * np.log(1+z)+(-3.*a3+a2*np.log(10))*np.log(1+z)**2+a3*np.log(1.+z)**3)
-    if unit == 'Mpc':
-        res = shape*(h0*100/(_c_/1000.))
-    else:
-        # unit of (km/s)/Mpc
-        res = shape*(h0*100.)
+    # a2-a3
+    # shape = -(1.+z)**2*np.log(10)**2/(-np.log(10)**2+np.log(10)*(-2.*a2+np.log(10))
+    #                                   * np.log(1+z)+(-3.*a3+a2*np.log(10))*np.log(1+z)**2+a3*np.log(1.+z)**3)
+    # TODO: a2 a3 a4
+    # if unit == 'Mpc':
+    #     res = shape*(h0*100/(_c_/1000.))
+    # else:
+    #     # unit of (km/s)/Mpc
+    #     res = shape*(h0*100.)
+    raise Exception('this funciton is only for testing purpose. ')
     return res
 
 
-def H_at_z(z, h0, a2, a3, unit='Mpc'):
+def H_at_z(z, h0, a2, a3, a4, unit='Mpc'):
     """Hubble at z expanded with powers of log10(1+z)
 
     :param z: redshift
     :param h0:  H in [100*km/s/Mpc]
     :param a2: the second coefficient of the log10(1+z) expansion
     :param a3: the third coefficient of the log10(1+z) expansion
+    :param a4: the fourth coefficient of the log10(1+z) expansion    
     :param unit: flag to change the output unit
     :returns: H [1/Mpc] by default, or H [km/s/Mpc]
 
     """
     x = np.log10(1.+z)
-    shape = -(1+z)**2/(-1+x*(-2.*a2-3.*a3*x+(1.+x*(a2+a3*x))*np.log(10)))
+    # shape = -(1+z)**2/(-1+x*(-2.*a2-3.*a3*x+(1.+x*(a2+a3*x))*np.log(10)))
+    shape = (1.+z)**2/(1.
+                       + (2.*a2-np.ln(10.))*x
+                       + (3.*a3 - a2*np.ln(10))*x**2
+                       + (4.*a4 - a3*np.ln(10))*x**3
+                       - (a4*np.ln(10)) * x**4)
     if unit == 'Mpc':
         res = shape*(h0*100/(_c_/1000.))
     else:
@@ -117,21 +129,22 @@ def H_at_z(z, h0, a2, a3, unit='Mpc'):
     return res
 
 
-def dL_at_z(z, h0, a2, a3):
+def dL_at_z(z, h0, a2, a3, a4):
     """compute the luminosity distance, return in Mpc
 
     :param z: redshfit
     :param h0: Hubble in 100 km/s/Mpc
-    :param a2: the second coefficient of the log(1+z) expansion
-    :param a3: the third coefficient of the log(1+z) expansion
+    :param a2: the second coefficient of the log10(1+z) expansion
+    :param a3: the third coefficient of the log10(1+z) expansion
+    :param a4: the fourth coefficient of the log10(1+z) expansion    
 
     """
     x = np.log10(1.+z)
-    res = np.log(10)*(_c_/1000.)/(h0*100.)*(x + a2*x**2 + a3*x**3)
+    res = np.log(10)*(_c_/1000.)/(h0*100.)*(x + a2*x**2 + a3*x**3 + a4*x**4)
     return res
 
 
-def tau_at_z(z, h0, a2, a3):
+def tau_at_z(z, h0, a2, a3, a4):
     """Compute the comoving distance, return in Mpc
 
     Parameters
@@ -140,10 +153,11 @@ def tau_at_z(z, h0, a2, a3):
         redshift
     :param h0 : scalar
         Hubble in 100 km/s/Mpc
-    :param a2: the second coefficient of the log(1+z) expansion
-    :param a3: the third coefficient of the log(1+z) expansion
+    :param a2: the second coefficient of the log10(1+z) expansion
+    :param a3: the third coefficient of the log10(1+z) expansion
+    :param a4: the fourth coefficient of the log10(1+z) expansion    
     """
-    res = dL_at_z(z, h0, a2, a3)/(1.+z)
+    res = dL_at_z(z, h0, a2, a3, a4)/(1.+z)
     return res
 
 
@@ -171,7 +185,7 @@ def tau_at_z_exact(z, h0, OmL):
     return res
 
 
-def dA_at_z(z, h0, a2, a3):
+def dA_at_z(z, h0, a2, a3, a4):
     """
     Angular distance [Mpc]
 
@@ -180,17 +194,17 @@ def dA_at_z(z, h0, a2, a3):
     :returns: angular distance [Mpc]
 
     """
-    return dL_at_z(z, h0, a2, a3)/(1.+z)**2
+    return dL_at_z(z, h0, a2, a3, a4)/(1.+z)**2
 
 
-def muLCDM(z, h0, a2, a3):
+def muLCDM(z, h0, a2, a3, a4):
     """distance modulus defined as 5*log10(DL/10pc)
     """
-    res = 5.*np.log10(dL_at_z(z, h0, a2, a3)*1.e5)
+    res = 5.*np.log10(dL_at_z(z, h0, a2, a3, a4)*1.e5)
     return res
 
 
-def LumMod(ma, g, z, B, mg, h0, a2, a3,
+def LumMod(ma, g, z, B, mg, h0, a2, a3, a4,
            s=1.,
            omega=1.,
            axion_ini_frac=0.,
@@ -202,7 +216,7 @@ def LumMod(ma, g, z, B, mg, h0, a2, a3,
     raise Exception('Not implemented!')
 
 
-def ADDMod(ma, g, z, h0, a2, a3,
+def ADDMod(ma, g, z, h0, a2, a3, a4,
 
            omegaX=1.e4,
            omegaCMB=2.4e-4,
