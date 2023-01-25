@@ -211,31 +211,35 @@ def chi2_quasars(x,
         # print(np.sum(np.abs(logPggUV_arr)))
         DL_arr = tau_at_z_vec(qso_z_arr, h0=h0, a2=a2, a3=a3, a4=a4) * \
             (1.+qso_z_arr) * _Mpc_over_cm_  # [cm]
-        mu_th_arr = 2.*(qso_gamma-1)*log10(DL_arr) + qso_beta + \
-            (qso_gamma-1)*log10(4.*np.pi)
-        # note that axion-induced conversion is killed for testing LCDM
-        # mu_th_arr = 2.*(qso_gamma-1)*log10(DL_arr) + logPggX_arr - \
-        #     qso_gamma*logPggUV_arr + qso_beta + \
-        #     (qso_gamma-1)*log10(4.*np.pi)  # FIXME
-        # print("mu_th_arr:", mu_th_arr)
-        # print(np.sum(np.abs(mu_th_arr)))
+        if np.any(np.array(DL_arr) <= 0.):
+            # filtering out weird a2-a3-a4 choices
+            chi2 = np.inf
+        else:
+            mu_th_arr = 2.*(qso_gamma-1)*log10(DL_arr) + qso_beta + \
+                (qso_gamma-1)*log10(4.*np.pi)
+            # note that axion-induced conversion is killed for testing LCDM
+            # mu_th_arr = 2.*(qso_gamma-1)*log10(DL_arr) + logPggX_arr - \
+            #     qso_gamma*logPggUV_arr + qso_beta + \
+            #     (qso_gamma-1)*log10(4.*np.pi)  # FIXME
+            # print("mu_th_arr:", mu_th_arr)
+            # print(np.sum(np.abs(mu_th_arr)))
 
-        # get the measurement
-        mu_exp_arr = (qso_logf2keV_arr - qso_gamma*qso_logf2500_arr)
-        # print("mu_exp_arr:", mu_exp_arr)
-        # print(np.sum(np.abs(mu_exp_arr)))
+            # get the measurement
+            mu_exp_arr = (qso_logf2keV_arr - qso_gamma*qso_logf2500_arr)
+            # print("mu_exp_arr:", mu_exp_arr)
+            # print(np.sum(np.abs(mu_exp_arr)))
 
-        # get the 1 sigma std deviation
-        # using the symmetric error for now
-        sigma_arr = np.sqrt(
-            (qso_gamma * qso_dlogf2500_arr)**2 +
-            (qso_dlogf2keV_low_arr + qso_dlogf2keV_up_arr)**2/4 +
-            qso_delta**2)  # intrinsic scattering added here
+            # get the 1 sigma std deviation
+            # using the symmetric error for now
+            sigma_arr = np.sqrt(
+                (qso_gamma * qso_dlogf2500_arr)**2 +
+                (qso_dlogf2keV_low_arr + qso_dlogf2keV_up_arr)**2/4 +
+                qso_delta**2)  # intrinsic scattering added here
 
-        chi2 = np.sum((mu_th_arr - mu_exp_arr)**2/sigma_arr**2
-                      + 2.*np.log(sigma_arr) + np.log(2.*np.pi))
+            chi2 = np.sum((mu_th_arr - mu_exp_arr)**2/sigma_arr**2
+                          + 2.*np.log(sigma_arr) + np.log(2.*np.pi))
 
-        # added the log term, relevant when delta is a nuisance parameter
+            # added the log term, relevant when delta is a nuisance parameter
 
     else:
 
@@ -259,12 +263,18 @@ def chi2_quasars(x,
                                     g=ga,
                                     z=z,
                                     h0=h0,
-                                    a2=a2, a3=a3, a4=a4
+                                    a2=a2, a3=a3, a4=a4,
                                     omega=omega_UV,
                                     **kwargs_local)
 
             DL = tau_at_z(z, h0=h0, a2=a2, a3=a3, a4=a4) * \
                 (1+z) * _Mpc_over_cm_  # [cm]
+
+            if DL <= 0:
+                # sanity check
+                chi2 = np.inf
+                break
+
             mu_th = 2.*(qso_gamma-1)*log10(DL) + logPggX - \
                 qso_gamma*logPggUV + qso_beta + \
                 (qso_gamma-1)*log10(4.*np.pi)
