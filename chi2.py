@@ -144,17 +144,18 @@ def chi2_quasars(x,
                  data=None,
                  vectorize=True,
                  full_output=False,
+                 dm_output=False,
                  # quasars_delta=None,
                  **kwargs):
-    """Computes quasars chi2.     **kwargs contain the arguments for LumMod. 
+    """Computes quasars chi2.     **kwargs contain the arguments for LumMod.
 
     :param x: the theory point that contains (ma, ga, h0, a2, a3, a4, qso_gamma, qso_beta, qso_delta)
-    :param data: must be have certain structures. See source code for the structure needed. 
+    :param data: must be have certain structures. See source code for the structure needed.
     :param vectorize: whether to vectorize the computation
-    :param full_output: whether to output other quantities besides chi2, useful for testing. 
+    :param full_output: whether to output other quantities besides chi2, useful for testing.
+    :param dm_output: whether to output the distance modulus and its error bar
 
     """
-
     if not use_loglkl:
         raise Exception(
             'You asked for chi2 but quasars have to use log(likelihood) since qso_delta makes it otherwise unbounded')
@@ -215,28 +216,29 @@ def chi2_quasars(x,
             # filtering out weird a2-a3-a4 choices
             chi2 = np.inf
         else:
-            mu_th_arr = 2.*(qso_gamma-1)*log10(DL_arr) + qso_beta + \
+            y_th_arr = 2.*(qso_gamma-1)*log10(DL_arr) + qso_beta + \
                 (qso_gamma-1)*log10(4.*np.pi)
             # note that axion-induced conversion is killed for testing LCDM
-            # mu_th_arr = 2.*(qso_gamma-1)*log10(DL_arr) + logPggX_arr - \
+            # y_th_arr = 2.*(qso_gamma-1)*log10(DL_arr) + logPggX_arr - \
             #     qso_gamma*logPggUV_arr + qso_beta + \
             #     (qso_gamma-1)*log10(4.*np.pi)  # FIXME
-            # print("mu_th_arr:", mu_th_arr)
-            # print(np.sum(np.abs(mu_th_arr)))
+            # print("y_th_arr:", y_th_arr)
+            # print(np.sum(np.abs(y_th_arr)))
 
             # get the measurement
-            mu_exp_arr = (qso_logf2keV_arr - qso_gamma*qso_logf2500_arr)
-            # print("mu_exp_arr:", mu_exp_arr)
-            # print(np.sum(np.abs(mu_exp_arr)))
+            y_exp_arr = (qso_logf2keV_arr - qso_gamma*qso_logf2500_arr)
+            # print("y_exp_arr:", y_exp_arr)
+            # print(np.sum(np.abs(y_exp_arr)))
 
             # get the 1 sigma std deviation
             # using the symmetric error for now
+
             sigma_arr = np.sqrt(
                 (qso_gamma * qso_dlogf2500_arr)**2 +
                 (qso_dlogf2keV_low_arr + qso_dlogf2keV_up_arr)**2/4 +
                 qso_delta**2)  # intrinsic scattering added here
 
-            chi2 = np.sum((mu_th_arr - mu_exp_arr)**2/sigma_arr**2
+            chi2 = np.sum((y_th_arr - y_exp_arr)**2/sigma_arr**2
                           + 2.*np.log(sigma_arr) + np.log(2.*np.pi))
 
             # added the log term, relevant when delta is a nuisance parameter
@@ -275,23 +277,33 @@ def chi2_quasars(x,
                 chi2 = np.inf
                 break
 
-            mu_th = 2.*(qso_gamma-1)*log10(DL) + logPggX - \
+            y_th = 2.*(qso_gamma-1)*log10(DL) + logPggX - \
                 qso_gamma*logPggUV + qso_beta + \
                 (qso_gamma-1)*log10(4.*np.pi)
 
             # get the measurement
-            mu_exp = (qso_logf2keV_arr[i] - qso_gamma*qso_logf2500_arr[i])
+            y_exp = (qso_logf2keV_arr[i] - qso_gamma*qso_logf2500_arr[i])
 
             # get the 1 sigma std deviation
             # using the symmetric error for now
             sigma = np.sqrt(
                 (0.6*qso_dlogf2500_arr[i])**2 + (qso_dlogf2keV_low_arr[i] + qso_dlogf2keV_up_arr[i])**2/4 + qso_delta**2)
 
-            chi2 += (mu_th - mu_exp)**2/sigma**2 + np.log(sigma)
+            chi2 += (y_th - y_exp)**2/sigma**2 + np.log(sigma)
 
     if full_output and vectorize:
         # used for debugging to plot out the data and the theory
-        return chi2, mu_th_arr, mu_exp_arr, sigma_arr, qso_z_arr
+        return chi2, y_th_arr, y_exp_arr, sigma_arr, qso_z_arr
+
+    elif dm_output and vectorize:
+        # output the distance modulus
+        dm_th_arr = 5. * np.log10(DL_arr/(_Mpc_over_cm_/_Mpc_over_10pc_))
+        dm_exp_arr = 5./2./(qso_gamma-1.) \
+            * (qso_logf2keV_arr-qso_gamma*qso_logf2500_arr
+               - qso_beta - (qso_gamma-1)*np.log10(4.*np.pi))\
+            - 5.*np.log10(_Mpc_over_cm_ / _Mpc_over_10pc_)
+
+        return (chi2, dm_th_arr, dm_exp_arr, qso_z_arr, qso_gamma, qso_beta, qso_delta, qso_logf2500_arr, qso_logf2keV_arr, qso_dlogf2500_arr, qso_dlogf2keV_low_arr, qso_dlogf2keV_up_arr)
     else:
         return chi2
 

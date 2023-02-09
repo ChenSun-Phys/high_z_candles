@@ -3,7 +3,7 @@
 *h5
 *~
 .ipynb_checkpoints
-chains
+# chains
 __pycache__
 .git
 *aux
