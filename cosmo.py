@@ -26,16 +26,17 @@ _1_over_cm_eV_ = 1.9732698045930252e-5  # [1/cm/eV]
 
 # FUNCTIONS:
 
-def Ekernel_int(OmL, z, w=-1.):
+def Ekernel_int(OmL, z, w0=-1., wa=0.):
     """The integral of the E kernel. Note that igm.py::Ekernel() is the integrand.
 
     :param OmL: Omega_Lambda
     :param z: redshift
-    :param w: equation of state of the dark energy
+    :param w0: equation of state of the dark energy today (default: -1.)
+    :param wa: parametrizes how w changes over time, w = w0 + wa*(1-a)  (default: 0.)
 
     """
     try:
-        res, _ = quad(lambda zp: 1 / sqrt(OmL * (1+zp)**(3*w+3) +
+        res, _ = quad(lambda zp: 1 / sqrt(OmL * (1+zp)**(3*(w0 + zp/(1+zp)*wa)+3) +
                                           (1 - OmL) * (1 + zp)**3), 0, z)
     except Warning:
         print('OmL=%e, z=%e' % (OmL, z))
@@ -43,23 +44,25 @@ def Ekernel_int(OmL, z, w=-1.):
     return res
 
 
-def H_at_z(z, h0, OmL, w=-1., unit='Mpc'):
+def H_at_z(z, h0, OmL, w0=-1., wa=0., unit='Mpc'):
     """Hubble at z 
 
     :param z: redshift
     :param h0:  H in [100*km/s/Mpc]
     :param OmL: Omega_Lambda
-    :param w: eos of DE
+    :param w0: equation of state of the dark energy today (default: -1.)
+    :param wa: parametrizes how w changes over time, w = w0 + wa*(1-a)  (default: 0.)
     :param unit: 
 
     :param unit: flag to change the output unit
     :returns: H [1/Mpc] by default, or H [km/s/Mpc]
     """
     if unit == 'Mpc':
-        res = h0*100.*sqrt(OmL * (1+z)**(3*w+3) + (1 - OmL)
+        res = h0*100.*sqrt(OmL * (1+z)**(3*(w0 + z/(1.+z)*wa)+3) + (1 - OmL)
                            * (1 + z)**3)/(_c_/1000.)
     else:
-        res = h0*100.*sqrt(OmL * (1+z)**(3*w+3) + (1 - OmL) * (1 + z)**3)
+        res = h0*100. * \
+            sqrt(OmL * (1+z)**(3*(w0+z/(1.+z)*wa)+3) + (1 - OmL) * (1 + z)**3)
     return res
 
 
@@ -77,65 +80,63 @@ def dL_at_z_a2a3(z, h0, a2, a3):
     return res
 
 
-def tau_at_z(z, h0, OmL, w=-1.):
-    """
-    Compute the comoving distance, return in Mpc
+def tau_at_z(z, h0, OmL, w0=-1., wa=0.):
+    """Compute the comoving distance, return in Mpc
 
-    Parameters
-    ----------
-    z : scalar
-        redshift
-    h0 : scalar
-        Hubble in 100 km/s/Mpc
-    OmL : scalar
-        Omega_Lambda
-    w : equation of state of the Dark Energy
+    :param z: redshift
+    :param h0: Hubble in 100 km/s/Mpc
+    :param OmL: Omega_Lambda
+    :param w0: equation of state of the dark energy today (default: -1.)
+    :param wa: parametrizes how w changes over time, w = w0 + wa*(1-a)  (default: 0.)
 
     """
     try:
-        res, _ = quad(lambda zp: 1. / sqrt(OmL * (1+zp)**(3*w+3) +
+        res, _ = quad(lambda zp: 1. / sqrt(OmL * (1+zp)**(3*(w0+zp/(1.+zp)*wa)+3.) +
                                            (1 - OmL) * (1 + zp)**3), 0., z)
     except Warning:
-        print('OmL=%e, z=%e, w=%e' % (OmL, z, w))
+        print('OmL=%e, z=%e, w0=%e, wa=%e' % (OmL, z, w0, wa))
         raise Exception
     res = res * _c_/1e5/h0
     return res
 
 
-def dA_at_z(z, h0, OmL, w=-1.):
+def dA_at_z(z, h0, OmL, w0=-1., wa=0.):
     """Angular distance [Mpc]
 
     :param z: redshift
     :param h0: H in [100*km/s/Mpc]
     :param OmL: Omega_Lambda
-    :param w: eos of dark energy
+    :param w0: equation of state of the dark energy today (default: -1.)
+    :param wa: parametrizes how w changes over time, w = w0 + wa*(1-a)  (default: 0.)
 
     :returns: angular distance [Mpc]
     """
-    return tau_at_z(z, h0, OmL, w=w)/(1.+z)
+    return tau_at_z(z, h0, OmL, w0=w0, wa=wa)/(1.+z)
 
 
-def muLCDM(z, h0, OmL, w=-1.):
+def muLCDM(z, h0, OmL, w0=-1., wa=0.):
     """The distance modulus
 
     :param z: redshift
     :param h0: Hubble constant [100 km/s/Mpc]
     :param OmL: Omega_Lambda
-    :param w: eos of dark energy
+    :param w0: equation of state of the dark energy today (default: -1.)
+    :param wa: parametrizes how w changes over time, w = w0 + wa*(1-a)  (default: 0.)
+
 
     """
     try:
-        res = 5. * log10((1.+z) * Ekernel_int(OmL, z, w)) + \
+        res = 5. * log10((1.+z) * Ekernel_int(OmL, z, w0=w0, wa=wa)) + \
             5.*log10(_c_/(h0*1e5)) + 25
     except Warning:
-        print('z=%e, OmL=%e, w=%e' % (z, OmL, w))
+        print('z=%e, OmL=%e, w0=%e, wa=%e' % (z, OmL, w0, wa))
         print('h0=%e' % h0)
         print('(1+z)*Ekernel_int=%e, c/h0=%e' %
-              ((1. + z) * Ekernel_int(OmL, z, w), _c_ / (h0 * 1e5)))
+              ((1. + z) * Ekernel_int(OmL, z, w0=w0, wa=wa), _c_ / (h0 * 1e5)))
     return res
 
 
-def LumMod(ma, g, z, B, mg, h, OmL, w=-1.,
+def LumMod(ma, g, z, B, mg, h, OmL, w0=-1., wa=0.,
            s=1.,
            omega=1.,
            axion_ini_frac=0.,
@@ -143,55 +144,62 @@ def LumMod(ma, g, z, B, mg, h, OmL, w=-1.,
            redshift_dependent=True,
            method='simps',
            prob_func='norm_log',
-           Nz=501):
-    """
-    Here we use a simple function to modify the intrinsic luminosity of the SN
-    so that mu_th = mu_STD - LumMod(). This is the one that takes into account the redshift
+           Nz=501,
+           skip_LumMod=False):
+    """Here we use a simple function to modify the intrinsic luminosity of the SN
 
-    Parameters
-    ----------
-    ma: axion mass [eV]
-    g: axion photon coupling  [1/GeV]
-    z: redshift, could be scalar or array. Array is preferred for fast vectorization. 
-    B: magnetic field, today [nG]
-    mg: photon mass [eV]
-    h: Hubble [100 km/s/Mpc]
-    OmL: Omega_Lambda
-    w: eos of DE
-    s: domain size [Mpc]
-    omega: energy [eV]
-    method: (simps, quad, old) for scalar z, or 'vectorize' if z is an array.
+    :param ma:  axion mass [eV]
+    :param g: axion photon coupling  [1/GeV]
+    :param z: redshift, could be scalar or array. Array is preferred for fast vectorization. 
+    :param B: magnetic field, today [nG]
+    :param mg: photon mass [eV]
+    :param h: Hubble [100 km/s/Mpc]
+    :param OmL: Omega_Lambda
+    :param w0: equation of state of the dark energy today (default: -1.)
+    :param wa: parametrizes how w changes over time, w = w0 + wa*(1-a)  (default: 0.)
+    :param s: domain size [Mpc]
+    :param omega: energy [eV]
+    :param axion_ini_frac: 
+    :param smoothed: 
+    :param redshift_dependent: 
+    :param method: (simps, quad, old) for scalar z, or 'vectorize' if z is an array.
+    :param prob_func: 
+    :param Nz: 
+    :param skip_LumMod: if switched on, return zero directly. This is useful for runs that do not involve axions. (Default: False)
 
     Returns
     -------
     res: scalar, delta M in the note
-
     """
+    if not skip_LumMod:
+        try:
+            # 2.5log10(L/L(1e-5Mpc))
+            res = 2.5 * log10(igm_Psurv(ma, g, z,
+                                        s=s,
+                                        B=B,
+                                        omega=omega,
+                                        mg=mg,
+                                        h=h,
+                                        Omega_L=OmL,
+                                        w0=w0,
+                                        wa=wa,
+                                        axion_ini_frac=axion_ini_frac,
+                                        smoothed=smoothed,
+                                        redshift_dependent=redshift_dependent,
+                                        method=method,
+                                        prob_func=prob_func,
+                                        Nz=Nz))
 
-    try:
-        # 2.5log10(L/L(1e-5Mpc))
-        res = 2.5 * log10(igm_Psurv(ma, g, z,
-                                    s=s,
-                                    B=B,
-                                    omega=omega,
-                                    mg=mg,
-                                    h=h,
-                                    Omega_L=OmL,
-                                    w=w,
-                                    axion_ini_frac=axion_ini_frac,
-                                    smoothed=smoothed,
-                                    redshift_dependent=redshift_dependent,
-                                    method=method,
-                                    prob_func=prob_func,
-                                    Nz=Nz))
+        except Warning:
+            print('ma=%e, g=%e' % (ma, g))
+            raise Exception('Overflow!!!')
+    else:
+        res = 0.
 
-    except Warning:
-        print('ma=%e, g=%e, y=%e' % (ma, g, y))
-        raise Exception('Overflow!!!')
     return res
 
 
-def ADDMod(ma, g, z, h, OmL, w=-1.,
+def ADDMod(ma, g, z, h, OmL, w0=-1., wa=0.,
 
            omegaX=1.e4,
            omegaCMB=2.4e-4,
@@ -285,7 +293,8 @@ def ADDMod(ma, g, z, h, OmL, w=-1.,
                       mg=mgIGM,
                       h=h,
                       Omega_L=OmL,
-                      w=w,
+                      w0=w0,
+                      wa=wa,
                       axion_ini_frac=IaIg,
                       smoothed=smoothed_IGM,
                       redshift_dependent=redshift_dependent,
@@ -300,7 +309,8 @@ def ADDMod(ma, g, z, h, OmL, w=-1.,
                         mg=mgIGM,
                         h=h,
                         Omega_L=OmL,
-                        w=w,
+                        w0=w0,
+                        wa=wa,
                         axion_ini_frac=0.,
                         smoothed=smoothed_IGM,
                         redshift_dependent=redshift_dependent,

@@ -39,22 +39,31 @@ rsdrag_sig = 0.26
 #
 # Planck 2018 prior on Omega Lambda
 #
-use_PlanckOmegaL = True
-OmegaL_mean = 0.6847
-OmegaL_sig = 0.0073
+use_PlanckOmegaL = False
+# OmegaL_mean = 0.6847
+# OmegaL_sig = 0.0073
 
 #
 # Planck 2018 prior on w,
 # !!!! careful should be used to avoid double counting BAO and SN !!!!
 #
+
+
+use_Planckw0 = False
+use_Planckwa = False
+
 # Planck 2018 + BAO + SN
-use_Planckw = True
-w_mean = -0.961
-w_sig = 0.077
-# 
+# w0_mean = -0.961
+# w0_sig = 0.077
+# wa_mean = -0.28
+# wa_sig = 0.29
+
+
 # Planck 2018 + BAO/RSD + Weak Lensing
-# w_mean = -0.76
-# w_sig = 0.2
+# w0_mean = -0.76
+# w0_sig = 0.2
+# wa_mean = -0.72
+# wa_sig = 0.58
 
 
 
@@ -163,10 +172,11 @@ ne_IGM [1/cm3] = 1.6e-8
 # param = [init, low, up, sigma]
 #
 OmL	  = [0.6847,   0.2, 0.75,  0.015]
-h0        = [  0.73,   0.6,  0.8,   0.02]
-w	  = [    0.,   -1.,   1.,    0.1]
+h0        = [  0.68,   0.6,  0.8,   0.02]
+w0	  = [    0.,   -1., 0.33,    0.1]
+wa	  = [    0.,   -1., 0.33,    0.1]
 logma	  = [   -15,   -17,  -11,    0.0]
-logga	  = [   -17,   -18,  -8.,   0.0]
+logga	  = [   -17,   -18,  -8.,    0.0]
 # logma	  = [   -14,   -17,  -11,    1.0]
 # logga	  = [   -13,   -18,  -8.,   0.20]
 # M0 	  = [ -19.3,   -21,  -18,    0.1]
