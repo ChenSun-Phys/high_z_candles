@@ -100,6 +100,7 @@ def parse(directory,
 
     # find the index of x and y
     print('variables scanned:', mcmc_keys)
+    print(x_name)
     x_idx = np.where(np.array(mcmc_keys) == x_name)[0][0]
     y_idx = np.where(np.array(mcmc_keys) == y_name)[0][0]
     print(x_idx)

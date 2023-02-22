@@ -3,7 +3,7 @@
 *h5
 *~
 .ipynb_checkpoints
-# chains
+chains
 __pycache__
 .git
 *aux
@@ -14,4 +14,4 @@ __pycache__
 .#*
 *.gz
 *~
-
+.rsync_exclude
