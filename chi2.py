@@ -7,7 +7,7 @@
 import numpy as np
 import scipy.linalg as la
 from numpy import pi, sqrt, log, log10, exp, power
-from cosmo import H_at_z, tau_at_z, dA_at_z, muLCDM, LumMod, ADDMod
+from .cosmo import H_at_z, tau_at_z, dA_at_z, muLCDM, LumMod, ADDMod
 # import data
 
 _Mpc_over_cm_ = 3.0857e+24
@@ -186,6 +186,8 @@ def chi2_quasars(x,
     if vectorize:
         # LumMod_vec = np.vectorize(LumMod)
         kwargs_local['method'] = 'vectorize'
+        # print('sys.path:', sys.path)
+        # print(help(tau_at_z))
         tau_at_z_vec = np.vectorize(tau_at_z)
 
         # logPggX_arr = 1/2.5*LumMod(ma=ma,
