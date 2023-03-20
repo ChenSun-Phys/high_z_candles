@@ -129,6 +129,12 @@ if __name__ == '__main__':
         labels.append(r"$\gamma$")
     if 'qso_beta' in keys:
         labels.append(r"$\beta$")
+    if 'qso_beta0' in keys:
+        labels.append(r"$\beta_0$")
+    if 'qso_beta1' in keys:
+        labels.append(r"$\beta_1$")
+    if 'qso_z0' in keys:
+        labels.append(r"$z_0$")
     if 'qso_delta' in keys:
         labels.append(r"$\delta$")
 

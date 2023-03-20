@@ -161,7 +161,8 @@ def chi2_quasars(x,
             'You asked for chi2 but quasars have to use log(likelihood) since qso_delta makes it otherwise unbounded')
 
     # theory point
-    (ma, ga, OmL, h0, w0, wa, qso_gamma, qso_beta, qso_delta) = x
+    (ma, ga, OmL, h0, w0, wa, qso_gamma, qso_beta0,
+     qso_beta1, qso_z0, qso_delta) = x
 
     # Anchor_SN, _, Anchor_Ceph, _, _, Anchor_Msig, _, _ = data
     (qso_name_arr,
@@ -210,8 +211,14 @@ def chi2_quasars(x,
         # print(np.sum(np.abs(logPggUV_arr)))
         DL_arr = tau_at_z_vec(qso_z_arr, h0, OmL, w0, wa) * \
             (1.+qso_z_arr) * _Mpc_over_cm_  # [cm]
+
+        # make a beta array based on the redshift
+        qso_beta_arr = np.zeros_like(qso_z_arr)
+        qso_beta_arr[qso_z_arr < qso_z0] = qso_beta0
+        qso_beta_arr[qso_z_arr >= qso_z0] = qso_beta1
+
         y_th_arr = 2.*(qso_gamma-1)*log10(DL_arr) + logPggX_arr - \
-            qso_gamma*logPggUV_arr + qso_beta + \
+            qso_gamma*logPggUV_arr + qso_beta_arr + \
             (qso_gamma-1)*log10(4.*np.pi)
         # print("y_th_arr:", y_th_arr)
         # print(np.sum(np.abs(y_th_arr)))
@@ -233,49 +240,51 @@ def chi2_quasars(x,
         # added the log term, relevant when delta is a nuisance parameter
 
     else:
+        raise Exception(
+            'The non-vectorized quasar routine is no longer maintained. ')
 
-        for i in range(len(qso_z_arr)):
-            # compute theoretical prediction
-            z = qso_z_arr[i]
+        # for i in range(len(qso_z_arr)):
+        #     # compute theoretical prediction
+        #     z = qso_z_arr[i]
 
-            # use corresponding energy
-            # Note: the current LumMod has a 2.5 in the front.
-            # We don't need it here.
+        #     # use corresponding energy
+        #     # Note: the current LumMod has a 2.5 in the front.
+        #     # We don't need it here.
 
-            logPggX = 1/2.5*LumMod(ma=ma,
-                                   g=ga,
-                                   z=z,
-                                   h=h0,
-                                   OmL=OmL,
-                                   w0=w0,
-                                   wa=wa,
-                                   omega=omega_X,
-                                   **kwargs_local)
+        #     logPggX = 1/2.5*LumMod(ma=ma,
+        #                            g=ga,
+        #                            z=z,
+        #                            h=h0,
+        #                            OmL=OmL,
+        #                            w0=w0,
+        #                            wa=wa,
+        #                            omega=omega_X,
+        #                            **kwargs_local)
 
-            logPggUV = 1/2.5*LumMod(ma=ma,
-                                    g=ga,
-                                    z=z,
-                                    h=h0,
-                                    OmL=OmL,
-                                    w0=w0,
-                                    wa=wa,
-                                    omega=omega_UV,
-                                    **kwargs_local)
+        #     logPggUV = 1/2.5*LumMod(ma=ma,
+        #                             g=ga,
+        #                             z=z,
+        #                             h=h0,
+        #                             OmL=OmL,
+        #                             w0=w0,
+        #                             wa=wa,
+        #                             omega=omega_UV,
+        #                             **kwargs_local)
 
-            DL = tau_at_z(z, h0, OmL, w0, wa) * (1+z) * _Mpc_over_cm_  # [cm]
-            y_th = 2.*(qso_gamma-1)*log10(DL) + logPggX - \
-                qso_gamma*logPggUV + qso_beta + \
-                (qso_gamma-1)*log10(4.*np.pi)
+        #     DL = tau_at_z(z, h0, OmL, w0, wa) * (1+z) * _Mpc_over_cm_  # [cm]
+        #     y_th = 2.*(qso_gamma-1)*log10(DL) + logPggX - \
+        #         qso_gamma*logPggUV + qso_beta + \
+        #         (qso_gamma-1)*log10(4.*np.pi)
 
-            # get the measurement
-            y_exp = (qso_logf2keV_arr[i] - qso_gamma*qso_logf2500_arr[i])
+        #     # get the measurement
+        #     y_exp = (qso_logf2keV_arr[i] - qso_gamma*qso_logf2500_arr[i])
 
-            # get the 1 sigma std deviation
-            # using the symmetric error for now
-            sigma = np.sqrt(
-                (0.6*qso_dlogf2500_arr[i])**2 + (qso_dlogf2keV_low_arr[i] + qso_dlogf2keV_up_arr[i])**2/4 + qso_delta**2)
+        #     # get the 1 sigma std deviation
+        #     # using the symmetric error for now
+        #     sigma = np.sqrt(
+        #         (0.6*qso_dlogf2500_arr[i])**2 + (qso_dlogf2keV_low_arr[i] + qso_dlogf2keV_up_arr[i])**2/4 + qso_delta**2)
 
-            chi2 += (y_th - y_exp)**2/sigma**2 + np.log(sigma)
+        #     chi2 += (y_th - y_exp)**2/sigma**2 + np.log(sigma)
 
     if full_output and vectorize:
         # used for debugging to plot out the data and the theory
@@ -287,10 +296,10 @@ def chi2_quasars(x,
         dm_exp_arr = 5./2./(qso_gamma-1.) \
             * (qso_logf2keV_arr-qso_gamma*qso_logf2500_arr
                - logPggX_arr + qso_gamma*logPggUV_arr
-               - qso_beta - (qso_gamma-1)*np.log10(4.*np.pi))\
+               - qso_beta_arr - (qso_gamma-1)*np.log10(4.*np.pi))\
             - 5.*np.log10(_Mpc_over_cm_ / _Mpc_over_10pc_)
 
-        return (chi2, dm_th_arr, dm_exp_arr, qso_z_arr, qso_gamma, qso_beta, qso_delta, qso_logf2500_arr, qso_logf2keV_arr, qso_dlogf2500_arr, qso_dlogf2keV_low_arr, qso_dlogf2keV_up_arr, logPggX_arr, logPggUV_arr)
+        return (chi2, dm_th_arr, dm_exp_arr, qso_z_arr, qso_gamma, qso_beta_arr, qso_delta, qso_logf2500_arr, qso_logf2keV_arr, qso_dlogf2500_arr, qso_dlogf2keV_low_arr, qso_dlogf2keV_up_arr, logPggX_arr, logPggUV_arr)
 
     else:
         return chi2
@@ -556,7 +565,9 @@ def lnprob(x,
         M0 = current_point['M0']
     if use_quasars:
         qso_gamma = current_point['qso_gamma']
-        qso_beta = current_point['qso_beta']
+        qso_beta0 = current_point['qso_beta0']
+        qso_beta1 = current_point['qso_beta1']
+        qso_z0 = current_point['qso_z0']
         qso_delta = current_point['qso_delta']
     if use_BOSSDR12:
         rs = current_point['rs']
@@ -597,7 +608,8 @@ def lnprob(x,
         if use_quasars:
 
             this_chi2 = chi2_quasars(
-                (ma, ga, OmL, h0, w0, wa, qso_gamma, qso_beta, qso_delta),
+                (ma, ga, OmL, h0, w0, wa, qso_gamma,
+                 qso_beta0, qso_beta1, qso_z0, qso_delta),
                 data=quasars_data,
                 **quasars_kwargs)
             chi2 += this_chi2
