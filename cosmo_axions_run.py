@@ -296,13 +296,13 @@ def main(chainslength,
                         True or False')
 
     try:
-        params['use_TDCOSMO']
+        params['use_h0prior']
     except KeyError:
-        params['use_TDCOSMO'] = False
-    if params['use_TDCOSMO'] is not True and \
-       params['use_TDCOSMO'] is not False:
+        params['use_h0prior'] = False
+    if params['use_h0prior'] is not True and \
+       params['use_h0prior'] is not False:
         raise Exception('Do you want TDCOSMO? Please check input.param\
-                        and specify the use_TDCOSMO parameter with\
+                        and specify the use_h0prior parameter with\
                         True or False')
 
     try:
@@ -658,7 +658,7 @@ def main(chainslength,
         bao_data = None
 
     # load H0 data
-    if params['use_TDCOSMO'] is True:
+    if params['use_h0prior'] is True:
         ext_data = (params['h_TD'], params['h_TD_sig'])
         experiments.append('tdcosmo')
     else:
@@ -749,7 +749,7 @@ def main(chainslength,
                            use_BAOlowz=params['use_BAOlowz'], bao_data=bao_data,
                            use_Pantheon=params['use_Pantheon'], pan_data=pan_data, pan_kwargs=pan_kwargs,
                            use_quasars=params['use_quasars'], quasars_data=quasars_data, quasars_kwargs=quasars_kwargs,
-                           use_TDCOSMO=params['use_TDCOSMO'], ext_data=ext_data,
+                           use_h0prior=params['use_h0prior'], ext_data=ext_data,
                            use_early=params['use_early'], early_data=early_data,
                            use_PlanckOmegaL=params['use_PlanckOmegaL'], PlanckOmegaL_data=PlanckOmegaL_data,
                            use_Planckw0=params['use_Planckw0'], Planckw0_data=Planckw0_data,

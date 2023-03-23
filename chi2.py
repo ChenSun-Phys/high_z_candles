@@ -538,7 +538,7 @@ def lnprob(x,
            use_BAOlowz=False, bao_data=None,
            use_Pantheon=False, pan_data=None, pan_kwargs=None,
            use_quasars=False, quasars_data=None, quasars_kwargs=None,
-           use_TDCOSMO=False, ext_data=None,
+           use_h0prior=False, ext_data=None,
            use_early=False, early_data=None,
            use_PlanckOmegaL=False, PlanckOmegaL_data=None,
            use_Planckw0=False, Planckw0_data=None,
@@ -578,7 +578,7 @@ def lnprob(x,
 
     # counting the number of experiments used
     experiments_counter = sum(
-        [use_SH0ES, use_Pantheon, use_quasars, use_TDCOSMO, use_early, use_PlanckOmegaL, use_Planckw0, use_Planckwa, use_BOSSDR12, use_BAOlowz, use_clusters])
+        [use_SH0ES, use_Pantheon, use_quasars, use_h0prior, use_early, use_PlanckOmegaL, use_Planckw0, use_Planckwa, use_BOSSDR12, use_BAOlowz, use_clusters])
     lnprob_each_chi2 = []
 
     if not is_Out_of_Range(x, keys, params):  # to avoid overflow
@@ -623,7 +623,7 @@ def lnprob(x,
                 print('quasars=%f' % this_chi2)
 
         # other H0 experiments
-        if use_TDCOSMO:
+        if use_h0prior:
 
             this_chi2 = chi2_External(h0, data=ext_data)
             chi2 += this_chi2
