@@ -13,6 +13,7 @@ from numpy import pi, sqrt, log, log10, exp, power
 from scipy.integrate import simps, quad
 from ag_probs import P0
 from tools import treat_as_arr
+from cosmo import tau_at_z, Ekernel
 
 # CONSTANTS AND CONVERSION FACTORS:
 
@@ -33,38 +34,6 @@ Mpc_times_eV = Mpc_times_GeV/GeV_over_eV  # Mpc*eV conversion
 
 
 # FUNCTIONS:
-
-def Ekernel(Omega_L, z, w0=-1., wa=0.):
-    """E(z) kernel, without integral
-
-    :param Omega_L: cosmological constant fractional density
-    :param z: redshift
-    :param w0: equation of state of the dark energy today (default: -1.)
-    :param wa: parametrizes how w changes over time, w = w0 + wa*(1-a)  (default: 0.)
-
-    """
-    Omega_m = 1. - Omega_L
-
-    return sqrt(Omega_L*(1.+z)**(3.*(w0+wa*(z/(1.+z)))+3.) + Omega_m*(1. + z)**3.)
-
-
-def DC(z, h=0.7, Omega_L=0.7, w0=-1., wa=0.):
-    """Comoving distance [Mpc].
-
-    :param z: redshift
-    :param h: reduced Hubble parameter H0/100 [km/s/Mpc] (default: 0.7)
-    :param Omega_L: cosmological constant fractional density (default: 0.7)
-    :param w0: equation of state of the dark energy today (default: -1.)
-    :param wa: parametrizes how w changes over time, w = w0 + wa*(1-a)  (default: 0.)
-
-    """
-    dH = (c0*1.e-3)/(100.*h)  # Hubble distance [Mpc]
-
-    def integrand(z): return 1./Ekernel(Omega_L, z, w0, wa)
-    integral = quad(integrand, 0., z)[0]
-
-    return dH*integral
-
 
 def igm_Psurv(ma, g, z,
               s=1.,
@@ -195,7 +164,7 @@ def igm_Psurv(ma, g, z,
                     "only 'vectorize' supports z array for now and you chose 'old'")
 
             # computing comoving distance
-            y = DC(z, h=h, Omega_L=Omega_L, w0=w0, wa=wa)
+            y = tau_at_z(z, h=h, Omega_L=Omega_L, w0=w0, wa=wa)
             argument = -1.5*(y/s)*Pga(z)  # argument of exponential
 
         else:
@@ -208,7 +177,7 @@ def igm_Psurv(ma, g, z,
                 "only redshift+vectorize supports z array for now and you chose redshift independent scheme")
 
         # computing comoving distance
-        y = DC(z, h=h, Omega_L=Omega_L, w0=w0, wa=wa)
+        y = tau_at_z(z, h=h, Omega_L=Omega_L, w0=w0, wa=wa)
         # z-independent probability conversion in one domain
         P = P0(ma, g, s, B=B, omega=omega, mg=mg, smoothed=smoothed)
         argument = -1.5*(y/s)*P  # argument of exponential

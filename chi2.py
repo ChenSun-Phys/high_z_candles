@@ -7,7 +7,7 @@
 import numpy as np
 import scipy.linalg as la
 from numpy import pi, sqrt, log, log10, exp, power
-from cosmo import H_at_z, tau_at_z, dA_at_z, muLCDM, LumMod, ADDMod
+from cosmo import H_at_z, tau_at_z, dA_at_z, distance_modulus, LumMod, ADDMod
 import data
 
 _Mpc_over_cm_ = 3.0857e+24
@@ -209,7 +209,7 @@ def chi2_quasars(x,
                                     **kwargs_local)
         # print(np.sum(np.abs(logPggX_arr)))
         # print(np.sum(np.abs(logPggUV_arr)))
-        DL_arr = tau_at_z_vec(qso_z_arr, h0, OmL, w0, wa) * \
+        DL_arr = tau_at_z_vec(qso_z_arr, h0, OmL, w0=w0, wa=wa) * \
             (1.+qso_z_arr) * _Mpc_over_cm_  # [cm]
 
         # make a beta array based on the redshift
@@ -318,8 +318,8 @@ def chi2_BOSSDR12(x, data=None):
 
     for i, z in enumerate(BOSS_meas_z):
 
-        DM_at_z = tau_at_z(z, h0, OmL, w0, wa)  # comoving
-        H_at_z_val = H_at_z(z, h0, OmL, w0, wa, unit='SI')  # in km/s/Mpc
+        DM_at_z = tau_at_z(z, h0, OmL, w0=w0, wa=wa)  # comoving
+        H_at_z_val = H_at_z(z, h0, OmL, w0=w0, wa=wa, unit='SI')  # in km/s/Mpc
 
         theo_DM_rdfid_by_rd_in_Mpc = DM_at_z / rs * BOSS_rsfid
         theo_H_rd_by_rdfid = H_at_z_val * rs / BOSS_rsfid
@@ -352,8 +352,8 @@ def chi2_BAOlowz(x, data=None):
 
     chi2 = 0.
     for i, z in enumerate(BAOlowz_meas_z):
-        da = dA_at_z(z, h0, OmL, w0, wa)
-        dr = z / H_at_z(z, h0, OmL, w0, wa)
+        da = dA_at_z(z, h0, OmL, w0=w0, wa=wa)
+        dr = z / H_at_z(z, h0, OmL, w0=w0, wa=wa)
         dv = (da * da * (1 + z) * (1 + z) * dr)**(1. / 3.)
 
         if BAOlowz_meas_type[i] == 3:
@@ -391,10 +391,12 @@ def chi2_Pantheon(x, data=None, vectorize=True, **kwargs):
         m_meas_arr = PAN_lkl[:, 1]
         change_arr = LumMod(ma, ga, z_arr, h=h0, OmL=OmL,
                             w0=w0, wa=wa, **kwargs_local)
-        muLCDM_vec = np.vectorize(muLCDM)
-        muLCDM_arr = muLCDM_vec(z_arr, h0, OmL, w0, wa)
+        distance_modulus_vec = np.vectorize(distance_modulus)
+        distance_modulus_arr = distance_modulus_vec(
+            z_arr, h0, OmL, w0=w0, wa=wa)
 
-        residuals = muLCDM_arr - m_meas_arr + [M0]*len(z_arr) - change_arr
+        residuals = distance_modulus_arr - \
+            m_meas_arr + [M0]*len(z_arr) - change_arr
 
     else:
         residuals = []
@@ -405,7 +407,7 @@ def chi2_Pantheon(x, data=None, vectorize=True, **kwargs):
             change = LumMod(ma, ga, z, h=h0, OmL=OmL, w0=w0, wa=wa, **kwargs)
 
             residuals.append(
-                muLCDM(z, h0, OmL, w0=w0, wa=wa) - m_meas + M0 - change)
+                distance_modulus(z, h0, OmL, w0=w0, wa=wa) - m_meas + M0 - change)
 
     L_residuals = la.solve_triangular(
         PAN_cov_sqrt, residuals, lower=True, check_finite=False)
@@ -488,7 +490,8 @@ def chi2_clusters(pars, data=None, wanna_correct=True, fixed_Rvir=False, **kwarg
             # each cluster has its own virial radius, already computed under some fiducial LCDM assumption
             r_up = Rvir_cls[i]
 
-        factor = ADDMod(ma, ga, z, h0, OmL, w0, wa,
+        factor = ADDMod(ma, ga, z, h0, OmL,
+                        w0=w0, wa=wa,
                         ne0=ne0,
                         rc_outer=rc_outer,
                         beta_outer=beta_outer,
@@ -499,7 +502,8 @@ def chi2_clusters(pars, data=None, wanna_correct=True, fixed_Rvir=False, **kwarg
                         galaxy_index=i,
                         **kwargs)
 
-        DA_th = dA_at_z(z, h0, OmL, w0, wa) * factor
+        DA_th = dA_at_z(z, h0, OmL,
+                        w0=w0, wa=wa) * factor
 
         residuals.append(DA - DA_th)
 
