@@ -183,3 +183,66 @@ def igm_Psurv(ma, g, z,
         argument = -1.5*(y/s)*P  # argument of exponential
 
     return A + (1-A)*exp(argument)
+
+
+def LumMod(ma, g, z, B, mg, h, OmL, w0=-1., wa=0.,
+           s=1.,
+           omega=1.,
+           axion_ini_frac=0.,
+           smoothed=False,
+           redshift_dependent=True,
+           method='simps',
+           prob_func='norm_log',
+           Nz=501,
+           skip_LumMod=False):
+    """Here we use a simple function to modify the intrinsic luminosity of the SN
+
+    :param ma:  axion mass [eV]
+    :param g: axion photon coupling  [1/GeV]
+    :param z: redshift, could be scalar or array. Array is preferred for fast vectorization. 
+    :param B: magnetic field, today [nG]
+    :param mg: photon mass [eV]
+    :param h: Hubble [100 km/s/Mpc]
+    :param OmL: Omega_Lambda
+    :param w0: equation of state of the dark energy today (default: -1.)
+    :param wa: parametrizes how w changes over time, w = w0 + wa*(1-a)  (default: 0.)
+    :param s: domain size [Mpc]
+    :param omega: energy [eV]
+    :param axion_ini_frac: 
+    :param smoothed: 
+    :param redshift_dependent: 
+    :param method: (simps, quad, old) for scalar z, or 'vectorize' if z is an array.
+    :param prob_func: 
+    :param Nz: 
+    :param skip_LumMod: if switched on, return zero directly. This is useful for runs that do not involve axions. (Default: False)
+
+    Returns
+    -------
+    res: scalar, delta M in the note
+    """
+    if not skip_LumMod:
+        try:
+            # 2.5log10(L/L(1e-5Mpc))
+            res = 2.5 * log10(igm_Psurv(ma, g, z,
+                                        s=s,
+                                        B=B,
+                                        omega=omega,
+                                        mg=mg,
+                                        h=h,
+                                        Omega_L=OmL,
+                                        w0=w0,
+                                        wa=wa,
+                                        axion_ini_frac=axion_ini_frac,
+                                        smoothed=smoothed,
+                                        redshift_dependent=redshift_dependent,
+                                        method=method,
+                                        prob_func=prob_func,
+                                        Nz=Nz))
+
+        except Warning:
+            print('ma=%e, g=%e' % (ma, g))
+            raise Exception('Overflow!!!')
+    else:
+        res = 0.
+
+    return res

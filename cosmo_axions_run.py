@@ -660,7 +660,7 @@ def main(chainslength,
     # load H0 data
     if params['use_h0prior'] is True:
         ext_data = (params['h_TD'], params['h_TD_sig'])
-        experiments.append('tdcosmo')
+        experiments.append('h0prior')
     else:
         ext_data = None
 
