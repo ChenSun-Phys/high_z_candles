@@ -71,7 +71,7 @@ use_Planckwa = False
 #
 # Pantheon SNe
 #
-use_Pantheon = True
+use_Pantheon = False
 Pantheon_lkl = lcparam_full_long.dat
 Pantheon_covmat = sys_full_long.dat
 Pantheon_subset = 1048
@@ -96,7 +96,7 @@ quasars_z_up = 100.
 #
 # BAO-BOSS DR12
 #
-use_BOSSDR12 = True
+use_BOSSDR12 = False
 BOSSDR12_meas = BAO_consensus_results_dM_Hz.txt
 BOSSDR12_covmat = BAO_consensus_covtot_dM_Hz.txt
 BOSSDR12_rsfid = 147.78
@@ -105,7 +105,7 @@ BOSSDR12_rsfid = 147.78
 # low-z DR7 MGS + 6DFs
 # data is given as dV/rs, so no fiducial is needed
 #
-use_BAOlowz = True
+use_BAOlowz = False
 BAOlowz_lkl = bao_smallz_2014.txt
 
 #
@@ -175,13 +175,13 @@ ne_IGM [1/cm3] = 1.6e-8
 OmL	  = [0.6847,   0.2, 0.75,  0.015]
 h0        = [  0.68,   0.6,  0.8,   0.02]
 w0	  = [   -1.,   -1.,   1.,    0.0]
-wa	  = [   -1.,   -1.,   1.,    0.0]
+wa	  = [    0.,   -1.,   1.,    0.0]
 # logma	  = [   -15,   -17,  -11,    0.0]
 # logga	  = [   -17,   -18,  -8.,    0.0]
 logma	  = [   -14,   -17,  -11,    1.0]
 logga	  = [   -13,   -18,  -8.,   0.20]
-M0 	  = [ -19.3,   -21,  -18,    0.1]
-rs	  = [147.78,  120., 160.,     1.]
+# M0 	  = [ -19.3,   -21,  -18,    0.1]
+# rs	  = [147.78,  120., 160.,     1.]
 qso_gamma = [   0.7,   0.1,  1.0,   0.07]
 qso_beta0 = [    5.,    0.,  10.,    0.3]
 qso_beta1 = [    5.,    0.,  10.,    0. ]
