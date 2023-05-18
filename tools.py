@@ -160,3 +160,18 @@ def scientific(val, output='string'):
     elif output == 'number':
         res = (factor, exponent)
     return res
+
+
+def flatten_tuples(t):
+    """Simple tool to flatten tuples
+
+    :param t: nested tuples
+    :returns: flattened tuple
+
+    """
+
+    for x in t:
+        if isinstance(x, tuple):
+            yield from flatten_tuples(x)
+        else:
+            yield x

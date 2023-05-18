@@ -10,6 +10,7 @@ from numpy import pi, sqrt, log, log10, exp, power
 from cosmo import H_at_z, tau_at_z, dA_at_z, distance_modulus
 from igm import LumMod
 from icm import ADDMod
+from tools import flatten_tuples
 import data
 
 _Mpc_over_cm_ = 3.0857e+24
@@ -147,14 +148,15 @@ def chi2_quasars(x,
                  vectorize=True,
                  full_output=False,
                  dm_output=False,
+                 get_optical=False,
                  # quasars_delta=None,
                  **kwargs):
-    """Computes quasars chi2.     **kwargs contain the arguments for LumMod. 
+    """Computes quasars chi2.     **kwargs contain the arguments for LumMod.
 
     :param x: the theory point that contains (ma, ga, OmL, h0, w0, wa, qso_gamma, qso_beta)
-    :param data: must be have certain structures. See source code for the structure needed. 
+    :param data: must be have certain structures. See source code for the structure needed.
     :param vectorize: whether to vectorize the computation
-    :param full_output: whether to output other quantities besides chi2, useful for testing. 
+    :param full_output: whether to output other quantities besides chi2, useful for testing.
 
     """
 
@@ -209,6 +211,20 @@ def chi2_quasars(x,
                                     wa=wa,
                                     omega=omega_UV,
                                     **kwargs_local)
+
+        if get_optical:
+            # for debugging purpose to check the mod in optical band
+            # relevant for PAN
+            logPggOptical_arr = 1/2.5*LumMod(ma=ma,
+                                             g=ga,
+                                             z=qso_z_arr,
+                                             h=h0,
+                                             OmL=OmL,
+                                             w0=w0,
+                                             wa=wa,
+                                             omega=1.,  # the optical energy PAN uses
+                                             **kwargs_local)
+
         # print(np.sum(np.abs(logPggX_arr)))
         # print(np.sum(np.abs(logPggUV_arr)))
         DL_arr = tau_at_z_vec(qso_z_arr, h0, OmL, w0=w0, wa=wa) * \
@@ -292,7 +308,7 @@ def chi2_quasars(x,
         # used for debugging to plot out the data and the theory
         return chi2, y_th_arr, y_exp_arr, sigma_arr, qso_z_arr
 
-    elif dm_output and vectorize:
+    elif dm_output and vectorize and (not get_optical):
         # output the distance modulus
         dm_th_arr = 5. * np.log10(DL_arr/(_Mpc_over_cm_/_Mpc_over_10pc_))
         dm_exp_arr = 5./2./(qso_gamma-1.) \
@@ -301,7 +317,45 @@ def chi2_quasars(x,
                - qso_beta_arr - (qso_gamma-1)*np.log10(4.*np.pi))\
             - 5.*np.log10(_Mpc_over_cm_ / _Mpc_over_10pc_)
 
-        return (chi2, dm_th_arr, dm_exp_arr, qso_z_arr, qso_gamma, qso_beta_arr, qso_delta, qso_logf2500_arr, qso_logf2keV_arr, qso_dlogf2500_arr, qso_dlogf2keV_low_arr, qso_dlogf2keV_up_arr, logPggX_arr, logPggUV_arr)
+        return (chi2,
+                dm_th_arr,
+                dm_exp_arr,
+                qso_z_arr,
+                qso_gamma,
+                qso_beta_arr,
+                qso_delta,
+                qso_logf2500_arr,
+                qso_logf2keV_arr,
+                qso_dlogf2500_arr,
+                qso_dlogf2keV_low_arr,
+                qso_dlogf2keV_up_arr,
+                logPggX_arr,
+                logPggUV_arr)
+
+    elif dm_output and vectorize and get_optical:
+        # output the distance modulus
+        dm_th_arr = 5. * np.log10(DL_arr/(_Mpc_over_cm_/_Mpc_over_10pc_))
+        dm_exp_arr = 5./2./(qso_gamma-1.) \
+            * (qso_logf2keV_arr-qso_gamma*qso_logf2500_arr
+               - logPggX_arr + qso_gamma*logPggUV_arr
+               - qso_beta_arr - (qso_gamma-1)*np.log10(4.*np.pi))\
+            - 5.*np.log10(_Mpc_over_cm_ / _Mpc_over_10pc_)
+
+        return (chi2,
+                dm_th_arr,
+                dm_exp_arr,
+                qso_z_arr,
+                qso_gamma,
+                qso_beta_arr,
+                qso_delta,
+                qso_logf2500_arr,
+                qso_logf2keV_arr,
+                qso_dlogf2500_arr,
+                qso_dlogf2keV_low_arr,
+                qso_dlogf2keV_up_arr,
+                logPggX_arr,
+                logPggUV_arr,
+                logPggOptical_arr)
 
     else:
         return chi2
@@ -372,55 +426,128 @@ def chi2_BAOlowz(x, data=None):
     return chi2
 
 
-def chi2_Pantheon(x, data=None, vectorize=True, **kwargs):
+def chi2_Pantheon(x, data=None, vectorize=True, M0_low=None, M0_up=None, full_output=False, **kwargs):
     """
     Computes Pantheon chi2. data must be equal to (PAN_lkl, PAN_cov_sqrt, PAN_cov_logdet). **kwargs are the arguments for LumMod.
-    """
+    :param x: the data point, to be unpacked
+    :param data: the data dict that contains the Pantheon data
+    :param vectorize: whether to vectorize in computing LumMod
+    :param M0_low: debug flag used when M0 is not provided. In that case a fit over M0 will be performed with M0_low being the lower bound
+    :param M0_up: debug flag used when M0 is not provided. In that case a fit over M0 will be performed with M0_up being the upper bound.
 
-    (ma, ga, OmL, h0, w0, wa, M0) = x
+    return:
+    (is_M0_provided==True) && (full_output==True):         # output format: chi2, muth_arr, muexp_arr
+    (is_M0_provided==False) && (full_output==True):        # output format: chi2, muth_arr, muexp_arr, M0 best fit
+    (is_M0_provided==True) && (full_output==False):        # output format: chi2
+    (is_M0_provided==False) && (full_output==False):       # output format: chi2, M0 best fit
+
+
+    """
+    is_M0_provided = False
+    try:
+        (ma, ga, OmL, h0, w0, wa, M0) = x
+        is_M0_provided = True
+    except ValueError:
+        # for the case of missing M0,
+        (ma, ga, OmL, h0, w0, wa) = x
+
+    # the core computation defined
+
     PAN_lkl, PAN_cov_sqrt, PAN_cov_logdet = data
 
-    chi2 = 0.
+    def compute_chi2(M0):
+        chi2 = 0.
 
-    # numerical scan
+        # numerical scan
 
-    if vectorize:
-        # so that kwargs is not touched
-        kwargs_local = kwargs.copy()
-        # overwrite the kwargs that's fed to LumMod
-        kwargs_local['method'] = 'vectorize'
-        z_arr = PAN_lkl[:, 0]
-        m_meas_arr = PAN_lkl[:, 1]
-        change_arr = LumMod(ma, ga, z_arr, h=h0, OmL=OmL,
-                            w0=w0, wa=wa, **kwargs_local)
-        distance_modulus_vec = np.vectorize(distance_modulus)
-        distance_modulus_arr = distance_modulus_vec(
-            z_arr, h0, OmL, w0=w0, wa=wa)
+        if vectorize:
+            # so that kwargs is not touched
+            kwargs_local = kwargs.copy()
+            # overwrite the kwargs that's fed to LumMod
+            kwargs_local['method'] = 'vectorize'
+            z_arr = PAN_lkl[:, 0]
+            m_meas_arr = PAN_lkl[:, 1]
+            change_arr = LumMod(ma, ga, z_arr, h=h0, OmL=OmL,
+                                w0=w0, wa=wa, **kwargs_local)
+            distance_modulus_vec = np.vectorize(distance_modulus)
+            distance_modulus_arr = distance_modulus_vec(
+                z_arr, h0, OmL, w0=w0, wa=wa)
 
-        residuals = distance_modulus_arr - \
-            m_meas_arr + [M0]*len(z_arr) - change_arr
+            residuals = distance_modulus_arr - \
+                m_meas_arr + [M0]*len(z_arr) - change_arr
+
+            # for later plots
+            if full_output:
+                muth_arr = distance_modulus_arr - change_arr
+                muexp_arr = m_meas_arr - [M0]*len(z_arr)
+        else:
+            # if is_M0_provided:
+            #     raise Exception(
+            #         "M0 fit is only available in vectorized module. Turn vectorize to True.")
+            residuals = []
+
+            if full_output:
+                muth_arr = []
+                muexp_arr = []
+
+            for rec in PAN_lkl:
+                z = rec[0]
+                m_meas = rec[1]
+
+                change = LumMod(ma, ga, z, h=h0, OmL=OmL,
+                                w0=w0, wa=wa, **kwargs)
+
+                residuals.append(
+                    distance_modulus(z, h0, OmL, w0=w0, wa=wa) - m_meas + M0 - change)
+
+                if full_output:
+                    muth_arr.append(distance_modulus(
+                        z, h0, OmL, w0=w0, wa=wa) - change)
+                    muexp_arr.append(m_meas - M0)
+
+        L_residuals = la.solve_triangular(
+            PAN_cov_sqrt, residuals, lower=True, check_finite=False)
+        chi2 = np.dot(L_residuals, L_residuals)
+
+        if use_loglkl:
+            # note this is no longer chi2. It's -2(log(lkl))
+            # so it can be combined with quasars
+            chi2 += PAN_cov_logdet + np.log(2.*np.pi) * len(L_residuals)
+
+        if full_output:
+            # also compute the error bar of muexp
+
+            # from numpy.linalg import eig
+            # sigma_arr, _ = eig(PAN_cov_sqrt)
+            # discard the eigenvalue method as it changes the order of the points.
+
+            sigma_arr = np.diag(PAN_cov_sqrt)
+            return (chi2, muth_arr, muexp_arr, np.array(sigma_arr), z_arr)
+        else:
+            return chi2
+
+    # determine if a fit over M0 is needed
+    if is_M0_provided:
+        res = compute_chi2(M0)
+        # result either chi2 value or (chi2 value, M0 best fit)
+        # depending on full_output flag
+        return res
 
     else:
-        residuals = []
-        for rec in PAN_lkl:
-            z = rec[0]
-            m_meas = rec[1]
+        # a fit over M0 is needed
+        res_arr = []
+        M0_arr = np.linspace(M0_low, M0_up)
+        for M0 in M0_arr:
+            res_arr.append(compute_chi2(M0))
+        if full_output:
+            # in this case res_arr is not just an array of chi2 valuees
+            # so extract the chi2, i.e. first value of each entry in res_arr
+            chi2_arr = np.array(res_arr, dtype=object)[:, 0]
+        else:
+            chi2_arr = res_arr
+        min_idx = np.argmin(chi2_arr)
 
-            change = LumMod(ma, ga, z, h=h0, OmL=OmL, w0=w0, wa=wa, **kwargs)
-
-            residuals.append(
-                distance_modulus(z, h0, OmL, w0=w0, wa=wa) - m_meas + M0 - change)
-
-    L_residuals = la.solve_triangular(
-        PAN_cov_sqrt, residuals, lower=True, check_finite=False)
-    chi2 = np.dot(L_residuals, L_residuals)
-
-    if use_loglkl:
-        # note this is no longer chi2. It's -2(log(lkl))
-        # so it can be combined with quasars
-        chi2 += PAN_cov_logdet + np.log(2.*np.pi) * len(L_residuals)
-
-    return chi2
+        return flatten_tuples((res_arr[min_idx], M0_arr[min_idx]))
 
 
 def chi2_External(h0, data=None):
@@ -674,7 +801,7 @@ def lnprob(x,
             lnprob_each_chi2.append(this_chi2)
 
             if verbose > 2:
-                print('boss=%f' % this_chi2)
+                print('boss DR12=%f' % this_chi2)
 
         # BAOlowz (6DFs + BOSS DR7 MGS, called smallz in MontePython)
         if use_BAOlowz:
@@ -684,7 +811,7 @@ def lnprob(x,
             lnprob_each_chi2.append(this_chi2)
 
             if verbose > 2:
-                print('bao=%f' % this_chi2)
+                print('bao low z=%f' % this_chi2)
 
         # clusters
         if use_clusters:
