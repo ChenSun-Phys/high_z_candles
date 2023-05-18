@@ -175,3 +175,16 @@ def flatten_tuples(t):
             yield from flatten_tuples(x)
         else:
             yield x
+
+
+def smooth_step(x, h0, h1, delx, x0):
+    """A smoothed step function making use of the hyperbolic tangent function
+
+    :param x: the variable
+    :param h: the "step" size defined as the function value diference between +infty and -infty
+    :param delx: step size. Roughly after one x0 the function value should go from 0 to h
+    :param x0: the step location. Half of the step is taken at x=b.
+
+    """
+
+    return h0 + (h1-h0)/2.*(np.tanh((x-x0)/delx)+1)

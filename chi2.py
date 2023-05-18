@@ -10,7 +10,7 @@ from numpy import pi, sqrt, log, log10, exp, power
 from cosmo import H_at_z, tau_at_z, dA_at_z, distance_modulus
 from igm import LumMod
 from icm import ADDMod
-from tools import flatten_tuples
+from tools import flatten_tuples, smooth_step
 import data
 
 _Mpc_over_cm_ = 3.0857e+24
@@ -166,7 +166,7 @@ def chi2_quasars(x,
 
     # theory point
     (ma, ga, OmL, h0, w0, wa, qso_gamma, qso_beta0,
-     qso_beta1, qso_z0, qso_delta) = x
+     qso_beta1, qso_delz, qso_z0, qso_delta) = x
 
     # Anchor_SN, _, Anchor_Ceph, _, _, Anchor_Msig, _, _ = data
     (qso_name_arr,
@@ -231,9 +231,11 @@ def chi2_quasars(x,
             (1.+qso_z_arr) * _Mpc_over_cm_  # [cm]
 
         # make a beta array based on the redshift
-        qso_beta_arr = np.zeros_like(qso_z_arr)
-        qso_beta_arr[qso_z_arr < qso_z0] = qso_beta0
-        qso_beta_arr[qso_z_arr >= qso_z0] = qso_beta1
+        qso_beta_arr = smooth_step(
+            qso_z_arr, qso_beta0, qso_beta1, qso_delz, qso_z0)
+        # qso_beta_arr = np.zeros_like(qso_z_arr)
+        # qso_beta_arr[qso_z_arr < qso_z0] = qso_beta0
+        # qso_beta_arr[qso_z_arr >= qso_z0] = qso_beta1
 
         y_th_arr = 2.*(qso_gamma-1)*log10(DL_arr) + logPggX_arr - \
             qso_gamma*logPggUV_arr + qso_beta_arr + \
@@ -700,6 +702,7 @@ def lnprob(x,
         qso_gamma = current_point['qso_gamma']
         qso_beta0 = current_point['qso_beta0']
         qso_beta1 = current_point['qso_beta1']
+        qso_delz = current_point['qso_delz']
         qso_z0 = current_point['qso_z0']
         qso_delta = current_point['qso_delta']
     if use_BOSSDR12:
@@ -742,7 +745,7 @@ def lnprob(x,
 
             this_chi2 = chi2_quasars(
                 (ma, ga, OmL, h0, w0, wa, qso_gamma,
-                 qso_beta0, qso_beta1, qso_z0, qso_delta),
+                 qso_beta0, qso_beta1, qso_delz, qso_z0, qso_delta),
                 data=quasars_data,
                 **quasars_kwargs)
             chi2 += this_chi2

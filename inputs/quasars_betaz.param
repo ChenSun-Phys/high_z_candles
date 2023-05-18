@@ -9,7 +9,7 @@
 #
 # h0prior: 
 #
-use_h0prior = True
+use_h0prior = False
 # TDCOSMO original 74.5+5.6-6.1, will use symmetric error bar
 # h_TD = 0.745
 # h_TD_sig = 0.0585
@@ -33,14 +33,14 @@ anchor_lkl = lstAnchor.csv
 #
 # Early Universe data, from Planck 2018
 #
-use_early = False
+use_early = True
 rsdrag_mean = 147.09
 rsdrag_sig = 0.26
 
 #
 # Planck 2018 prior on Omega Lambda
 #
-use_PlanckOmegaL = True
+use_PlanckOmegaL = False
 OmegaL_mean = 0.6847
 OmegaL_sig = 0.0073
 
@@ -185,6 +185,7 @@ rs	  = [147.78,  120., 160.,     1.]
 qso_gamma = [   0.7,   0.1,  1.0,   0.07]
 qso_beta0 = [    5.,    0.,  10.,    0.3]
 qso_beta1 = [    5.,    0.,  10.,    0.3]
+qso_delz  = [    1.,  0.01,  10.,    0.2]
 qso_z0    = [    3.,    0.,  10.,    0.3]
 qso_delta = [   0.3,  0.05,  0.6,   0.05]
 
