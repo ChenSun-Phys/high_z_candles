@@ -636,6 +636,7 @@ def chi2_clusters(pars, data=None, wanna_correct=True, fixed_Rvir=False, **kwarg
         DA_th = dA_at_z(z, h0, OmL,
                         w0=w0, wa=wa) * factor
 
+        # print('factor=', factor)
         residuals.append(DA - DA_th)
 
     residuals = np.array(residuals)

@@ -316,6 +316,9 @@ def icm_los_Psurv(ma, g, r_low, r_up, ne_fn, B_fn,
     def ne2(rr): return ne_fn(
         rr, **ne_kwargs)**2.  # square of the ICM electron number density [cm^-6]
 
+    # ICM magnetic field [muG]
+    def Bicm(rr): return B_fn(rr, ne_fn, **kwargs)
+
     if return_arrays:
 
         _, pArr, rArr = icm_Psurv(ma, g, r_low, r_up, ne_fn, B_fn,
@@ -336,6 +339,10 @@ def icm_los_Psurv(ma, g, r_low, r_up, ne_fn, B_fn,
 
         pfn = interp1d(rArr, pArr, fill_value='extrapolate')
         def Pgg_ne2(rr): return ne2(rr) * pfn(rr)
+        # print('g=%e' % g)
+        # # print("pArr=", pArr)
+        # print("ma=%g, g=%g, r_low=%g, r_up=%g, ne=%g, B=%g"
+        # % (ma, g, r_low, r_up, ne2((r_low+r_up)/2), Bicm((r_low+r_up)/2)))
 
     else:
 
@@ -723,7 +730,7 @@ def ADDMod(ma, g, z, h, OmL, w0=-1., wa=0.,
     """
 
     if ICM_effect:
-
+        # print("B_ref=", B_ref, ",r_ref=", r_ref, ",eta=", eta)
         # ICMdomain
         if varying_ICMdomain:
             r_Arr_raw = lst_r_Arr_raw[galaxy_index]
@@ -752,7 +759,7 @@ def ADDMod(ma, g, z, h, OmL, w0=-1., wa=0.,
 
         Pg, Pa = PICM, 1.-PICM
         IaIg = Pa/Pg
-
+        # print(PICM)
     else:
         Pg = 1.
         IaIg = 0.
@@ -789,4 +796,10 @@ def ADDMod(ma, g, z, h, OmL, w0=-1., wa=0.,
                         prob_func=prob_func_IGM,
                         Nz=Nz_IGM)
 
+    # print(Pg)
+    # print("Pgg_CMB=%g, Pgg_X=%g, Pg=%g, ADDMod=%g" %
+    #       (Pgg_CMB, Pgg_X, Pg, Pgg_CMB**2. / (Pgg_X * Pg)))
+    # check Pgg_X
+    # pring("ma=%g, g=%g, z=%g, s_IGM=%g, BIGM=%g, omegaCMB=%g, mgIGM=%g, h=%g, OmL=%g, w0=%g, wa=%g, axion_ini_frac=%g, smoothed=%g, redshift_dependent=%g, method=%g, prob_func=%g, Nz=%gNz_IGM")
+    # print("IaIg")
     return Pgg_CMB**2. / (Pgg_X * Pg)

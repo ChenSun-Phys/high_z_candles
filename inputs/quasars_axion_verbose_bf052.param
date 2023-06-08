@@ -117,7 +117,7 @@ wanna_correct = True
 omegaX [keV] = 5.
 omegaCMB [eV] = 2.4e-4
 # whether we use ICM effect
-ICM_effect = False
+ICM_effect = True
 
 ###################
 #       IGM       #

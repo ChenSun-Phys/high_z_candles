@@ -9,7 +9,7 @@
 #
 # h0prior: 
 #
-use_h0prior = False
+use_h0prior = True
 # TDCOSMO original 74.5+5.6-6.1, will use symmetric error bar
 # h_TD = 0.745
 # h_TD_sig = 0.0585
@@ -111,13 +111,13 @@ BAOlowz_lkl = bao_smallz_2014.txt
 #
 # Bonamente et al. cluster data
 #
-use_clusters = False
+use_clusters = True
 wanna_correct = True
 # clusters SZ & X-ray photon energies
 omegaX [keV] = 5.
 omegaCMB [eV] = 2.4e-4
 # whether we use ICM effect
-ICM_effect = False
+ICM_effect = True
 
 ###################
 #       IGM       #
@@ -138,33 +138,33 @@ B_IGM [nG] = 1.
 s_IGM [Mpc] = 1.
 ne_IGM [1/cm3] = 1.6e-8
 
-# ###################
-# #       ICM       #
-# ###################
-# #
-# # ICM flags
-# #
-# smoothed_ICM = False
-# method_ICM = product
-# # prob_func_ICM = norm_log
-# # Nr_ICM = 501
-# return_arrays = True
-# los_use_prepared_arrays = True
-# los_method = quad
-# # los_Nr = 501
+###################
+#       ICM       #
+###################
+#
+# ICM flags
+#
+smoothed_ICM = False
+method_ICM = product
+# prob_func_ICM = norm_log
+# Nr_ICM = 501
+return_arrays = True
+los_use_prepared_arrays = True
+los_method = quad
+# los_Nr = 501
 
-# #
-# # ICM properties
-# #
-# R_vir [Mpc] = 1.8
-# L_ICM [kpc] = 6.08
+#
+# ICM properties
+#
+R_vir [Mpc] = 1.8
+L_ICM [kpc] = 6.08
 
-# ICM_magnetic_model = A
-# # ICM_magnetic_model = custom
-# # r_low [kpc] = 0.
-# # B_ref [muG] = 10.
-# # r_ref [kpc] = 0.
-# # eta = 0.5
+ICM_magnetic_model = C
+# ICM_magnetic_model = custom
+# r_low [kpc] = 0.
+# B_ref [muG] = 0.
+# r_ref [kpc] = 0.
+# eta = 0.5
 
 ###################
 #    parameters   #
@@ -172,23 +172,25 @@ ne_IGM [1/cm3] = 1.6e-8
 #
 # param = [init, low, up, sigma]
 #
-OmL	  = [0.6847,   0.2, 0.75,  0.015]
-h0        = [  0.68,   0.6,  0.8,   0.02]
+# run052
+OmL	  = [0.68421044,   0.2, 0.75,  0.]
+h0        = [0.674853,   0.6,  0.8,   0.]
 w0	  = [   -1.,   -1.,   1.,    0.0]
 wa	  = [    0.,   -1.,   1.,    0.0]
-logma	  = [   -15,   -17,  -11,    0.0]
-logga	  = [   -17,   -18,  -8.,    0.0]
-# logma	  = [   -14,   -17,  -11,    1.0]
-# logga	  = [   -13,   -18,  -8.,   0.20]
-M0 	  = [ -19.3,   -21,  -18,    0.1]
-rs	  = [147.78,  120., 160.,     1.]
-qso_gamma = [   0.7,   0.1,  1.0,   0.07]
-qso_beta0 = [    5.,    0.,  10.,    0.3]
-qso_beta1 = [    5.,    0.,  10.,    0.3]
-# qso_delz  = [    1.,  0.01,  10.,    0.2]
-qso_delz  = [   0.2,  0.01,  0.4,    0.05]
-qso_z0    = [    3.,    0.,  10.,    0.3]
-qso_delta = [   0.3,  0.05,  0.6,   0.05]
+# logma	  = [   -15,   -17,  -11,    0.0]
+# logga	  = [   -17,   -18,  -8.,    0.0]
+logma	  = [-12.99517132,   -17,  -11,    0]
+logga	  = [-9.97781015,   -18,  -8.,    0.01]
+# logga	  = [-16.,   -18,  -8.,    0.01]
+# logga	  = [-17,   -18,  -8.,     0]
+M0 	  = [-19.41,   -21,  -18,    0.]
+rs	  = [147.09,  120., 160.,    0.] 
+qso_gamma = [0.62568118,   0.1,  1.0,     0.]
+qso_beta0 = [7.64944235,    0.,  10.,     0.]
+qso_beta1 = [    5.,    0.,  10.,    0. ]
+qso_delz  = [ 1., 0.1, 2., 0.]
+qso_z0    = [   50.,    0., 100.,    0.01 ]
+qso_delta = [0.22611939,  0.05,  0.6,   0.]
 
 #
 # Miscellaneous
@@ -200,5 +202,5 @@ qso_delta = [   0.3,  0.05,  0.6,   0.05]
 use_loglkl = True
 
 # verbosity of output
-verbose = 2
+verbose = 3
 # debug = True
