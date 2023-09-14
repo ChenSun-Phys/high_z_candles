@@ -20,6 +20,7 @@ import h5py
 import sys
 import getopt
 from cosmo_axions_run import pltpath, fill_mcmc_parameters, dir_init
+import pickle
 
 
 if __name__ == '__main__':
@@ -107,6 +108,13 @@ if __name__ == '__main__':
     # labels = [r"$\Omega_\Lambda$"]
     labels = []
     print("keys:", keys)
+    # the order matters here
+    if 'a2' in keys:
+        labels.append(r"$a_2$")
+    if 'a3' in keys:
+        labels.append(r"$a_3$")
+    if 'a4' in keys:
+        labels.append(r"$a_4$")
     if 'OmL' in keys:
         labels.append(r"$\Omega_\Lambda$")
     if 'h0' in keys:
@@ -146,6 +154,7 @@ if __name__ == '__main__':
                            quantiles=[0.16, 0.5, 0.84],
                            levels=(0.68, 0.95),
                            show_titles=True,
+                           title_fmt='.3f',
                            title_kwargs={"fontsize": 12})
     axes = np.array(figure.axes).reshape((dim_of_param, dim_of_param))
 
@@ -178,7 +187,7 @@ if __name__ == '__main__':
         reduced_dim = len(reduced_labels)
         print(reduced_dim)
 
-        # focusing on one contour 2sigma
+        # contours of 1,2,3 sigmas
         plt.figure(1)
         figure = corner.corner(reduced_samples,
                                labels=reduced_labels,
@@ -224,7 +233,7 @@ if __name__ == '__main__':
         plt.savefig(pltpath(directory, head='./plt_extract/custom_%s_%s' % (x, y)),
                     bbox_inches='tight')  # , bbox_inches=0)
 
-        # 95 CL
+        # 95 CL (2 sigma) contour
         plt.figure(2)
         figure = corner.corner(reduced_samples,
                                labels=reduced_labels,
@@ -238,15 +247,26 @@ if __name__ == '__main__':
                                hist_kwargs={'color': None})
         axes = np.array(figure.axes).reshape((reduced_dim, reduced_dim))
 
-        p = (figure.axes)[2].collections[0].get_paths()[0]
-        v = p.vertices
+        # p = (figure.axes)[2].collections[0].get_paths()[0]
+        # v = p.vertices
+        # fixed missing contours
+        p_arr = figure.axes[2].collections[0].get_paths()
+        v_arr = []
+        for i, p in enumerate(p_arr):
+            v = p.vertices
+            try:
+                v_arr = np.concatenate((v_arr, v))
+            except ValueError:
+                v_arr = v
 
         # saving the points of the 95% C.R. contour
         np.savetxt(pltpath(directory, head='./pts_extract/corner_%s_%s_pts_2sigma_' %
-                   (x, y), ext='.txt'), v)
+                           (x, y), ext='.txt'), v_arr)
+        with open(pltpath(directory, head='./pth_extract/corner_%s_%s_pth_2sigma_' %
+                          (x, y), ext='.dat'), 'wb') as f:
+            pickle.dump(figure, f)
 
-        # other CL
-        # focusing on one contour 3sigma
+        # extract 3 sigma contour
         plt.figure(3)
         figure = corner.corner(reduced_samples,
                                labels=reduced_labels,
@@ -260,38 +280,72 @@ if __name__ == '__main__':
                                hist_kwargs={'color': None})
         axes = np.array(figure.axes).reshape((reduced_dim, reduced_dim))
 
-        p = (figure.axes)[2].collections[0].get_paths()[0]
-        v = p.vertices
+        # p = (figure.axes)[2].collections[0].get_paths()[0]
+        # v = p.vertices
+        # fixed missing contours
+        p_arr = figure.axes[2].collections[0].get_paths()
+        v_arr = []
+        for i, p in enumerate(p_arr):
+            v = p.vertices
+            try:
+                v_arr = np.concatenate((v_arr, v))
+            except ValueError:
+                v_arr = v
 
-        # saving the points of the 99.7% C.R. contour
+        # saving the points of the 99.7% C.R. points
         np.savetxt(pltpath(directory, head='./pts_extract/corner_%s_%s_pts_3sigma_' %
-                   (x, y), ext='.txt'), v)
+                           (x, y), ext='.txt'), v_arr)
 
-        # other CL
-        # focusing on one contour 1sigma
-        plt.figure(4)
-        figure = corner.corner(reduced_samples,
-                               labels=reduced_labels,
-                               quantiles=[0.16, 0.5, 0.84],
-                               color='r', show_titles=True,
-                               plot_datapoints=False,
-                               plot_density=False,
-                               # levels=[1.-np.exp(-(2.)**2 /2.)],
-                               levels=[0.68],
-                               title_kwargs={"fontsize": 12},
-                               hist_kwargs={'color': None})
-        axes = np.array(figure.axes).reshape((reduced_dim, reduced_dim))
+        # save path for future use
+        with open(pltpath(directory, head='./pth_extract/corner_%s_%s_pth_3sigma_' %
+                          (x, y), ext='.dat'), 'wb') as f:
+            pickle.dump(figure, f)
 
-        p = (figure.axes)[2].collections[0].get_paths()[0]
-        v = p.vertices
+        try:
 
-        # saving the points of the 68% C.R. contour
-        np.savetxt(pltpath(directory, head='./pts_extract/corner_%s_%s_pts_1sigma_' %
-                   (x, y), ext='.txt'), v)
+            # extract 1 sigma
+            plt.figure(4)
+            figure = corner.corner(reduced_samples,
+                                   labels=reduced_labels,
+                                   quantiles=[0.16, 0.5, 0.84],
+                                   color='r', show_titles=True,
+                                   plot_datapoints=False,
+                                   plot_density=False,
+                                   # levels=[1.-np.exp(-(2.)**2 /2.)],
+                                   levels=[0.68],
+                                   title_kwargs={"fontsize": 12},
+                                   hist_kwargs={'color': None})
+            axes = np.array(figure.axes).reshape((reduced_dim, reduced_dim))
+
+            # p = (figure.axes)[2].collections[0].get_paths()[0]
+            # v = p.vertices
+            # fixed missing contours
+            p_arr = figure.axes[2].collections[0].get_paths()
+            v_arr = []
+            for i, p in enumerate(p_arr):
+                v = p.vertices
+                try:
+                    v_arr = np.concatenate((v_arr, v))
+                except ValueError:
+                    v_arr = v
+
+            # saving the points of the 68% C.R. contour
+            np.savetxt(pltpath(directory, head='./pts_extract/corner_%s_%s_pts_1sigma_' %
+                               (x, y), ext='.txt'), v_arr)
+            # save path for future use
+            with open(pltpath(directory, head='./pth_extract/corner_%s_%s_pth_1sigma_' %
+                              (x, y), ext='.dat'), 'wb') as f:
+                pickle.dump(figure, f)
+
+        except ValueError:
+            # contour not well defined
+            print('contour not well defined')
+            pass
 
     # actual payload
     dir_init(os.path.join(directory, './plots/pts_extract'))
     dir_init(os.path.join(directory, './plots/plt_extract'))
+    dir_init(os.path.join(directory, './plots/pth_extract'))
     for i, x in enumerate(keys[:-1]):
         for y in keys[i+1:]:
             get_custom(x, y)

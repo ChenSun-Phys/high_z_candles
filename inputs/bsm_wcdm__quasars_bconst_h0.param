@@ -1,0 +1,204 @@
+###########################################################
+#                     PARAMETERS FILE                     #
+###########################################################
+
+###############
+# likelihoods #
+###############
+
+#
+# h0prior: 
+#
+use_h0prior = True
+# TDCOSMO original 74.5+5.6-6.1, will use symmetric error bar
+# h_TD = 0.745
+# h_TD_sig = 0.0585
+# uncomment below to use fake 1% here
+# h_TD_sig = 0.00745
+# SH0ES H0 prior
+# h_TD = 0.7324
+# h_TD_sig = 0.0174
+# Planck H0 prior
+h_TD = 0.6736
+h_TD_sig = 0.0054
+
+#
+# SN anchoring from Riess 2016
+#
+use_SH0ES = False
+aB = 0.71273
+aBsig = 0.00176
+anchor_lkl = lstAnchor.csv
+
+#
+# Early Universe data, from Planck 2018
+#
+use_early = False
+rsdrag_mean = 147.09
+rsdrag_sig = 0.26
+
+#
+# Planck 2018 prior on Omega Lambda
+#
+use_PlanckOmegaL = False
+OmegaL_mean = 0.6847
+OmegaL_sig = 0.0073
+
+#
+# Planck 2018 prior on w,
+# !!!! careful should be used to avoid double counting BAO and SN !!!!
+#
+
+
+use_Planckw0 = False
+use_Planckwa = False
+
+# Planck 2018 + BAO + SN
+# w0_mean = -0.961
+# w0_sig = 0.077
+# wa_mean = -0.28
+# wa_sig = 0.29
+
+
+# Planck 2018 + BAO/RSD + Weak Lensing
+# w0_mean = -0.76
+# w0_sig = 0.2
+# wa_mean = -0.72
+# wa_sig = 0.58
+
+
+
+#
+# Pantheon SNe
+#
+use_Pantheon = False
+Pantheon_lkl = lcparam_full_long.dat
+Pantheon_covmat = sys_full_long.dat
+Pantheon_subset = 1048
+# SNe photon energy
+omegaSN [eV] = 1.
+
+
+#
+# quasars
+#
+use_quasars = True
+quasars_lkl = quasars_Lusso2020.txt
+# SNe photon energy
+omega_UV [eV] = 4.96
+omega_X [eV] = 2000
+quasars_vectorize = True
+quasars_z_low = 0.
+quasars_z_up = 100.
+# quasars_delta = 0.15
+
+
+#
+# BAO-BOSS DR12
+#
+use_BOSSDR12 = False
+BOSSDR12_meas = BAO_consensus_results_dM_Hz.txt
+BOSSDR12_covmat = BAO_consensus_covtot_dM_Hz.txt
+BOSSDR12_rsfid = 147.78
+
+#
+# low-z DR7 MGS + 6DFs
+# data is given as dV/rs, so no fiducial is needed
+#
+use_BAOlowz = False
+BAOlowz_lkl = bao_smallz_2014.txt
+
+#
+# Bonamente et al. cluster data
+#
+use_clusters = False
+wanna_correct = True
+# clusters SZ & X-ray photon energies
+omegaX [keV] = 5.
+omegaCMB [eV] = 2.4e-4
+# whether we use ICM effect
+ICM_effect = True
+
+###################
+#       IGM       #
+###################
+#
+# IGM flags:
+#
+redshift_dependent = True
+smoothed_IGM = False
+method_IGM = simps
+Nz_IGM = 101
+prob_func_IGM = norm_log
+
+#
+# IGM properties today:
+#
+B_IGM [nG] = 1.
+s_IGM [Mpc] = 1.
+ne_IGM [1/cm3] = 1.6e-8
+
+###################
+#       ICM       #
+###################
+#
+# ICM flags
+#
+smoothed_ICM = False
+method_ICM = product
+# prob_func_ICM = norm_log
+# Nr_ICM = 501
+return_arrays = True
+los_use_prepared_arrays = True
+los_method = quad
+# los_Nr = 501
+
+#
+# ICM properties
+#
+R_vir [Mpc] = 1.8
+L_ICM [kpc] = 6.08
+
+ICM_magnetic_model = C
+# ICM_magnetic_model = custom
+# r_low [kpc] = 0.
+# B_ref [muG] = 10.
+# r_ref [kpc] = 0.
+# eta = 0.5
+
+###################
+#    parameters   #
+###################
+#
+# param = [init, low, up, sigma]
+#
+
+OmL	  = [0.6842,  0.01, 0.99,  0.015]
+h0        = [0.6749,   0.6,  0.8,   0.02]
+w0	  = [   -0.,   -1.,   1.,    0.3]
+wa	  = [    0.,   -1.,   1.,    0.3]
+logma	  = [   -15,   -17,  -11,    0.0]
+logga	  = [   -17,   -18,  -8.,    0.0]
+# logma	  = [-12.99517132,   -17,  -11,  1.0]
+# logga	  = [-9.97781015,   -18,  -8.,   0.2]
+# M0 	  = [-19.41,   -21,  -18,    0.1]
+# rs	  = [147.09,  120., 160.,     1.]
+qso_gamma = [0.6257,   0.1,  1.0,   0.07]
+qso_beta0 = [7.6494,    0.,  10.,    0.3]
+qso_beta1 = [    5.,    0.,  10.,    0. ]
+qso_z0    = [   50.,    0., 100.,    0. ]
+qso_delz  = [ 0.01,  0.001,  10.,     0.]
+qso_delta = [0.2261,  0.05,  0.6,   0.05]
+
+#
+# Miscellaneous
+#
+
+# whether to use chi2 or log(likelihood)
+# for quasars one must use the latter since the scattering needs to be fitted
+# for other data sets it can be either. If commented out, it defaults to True.
+use_loglkl = True
+
+# verbosity of output
+verbose = 2
+# debug = True
