@@ -76,7 +76,9 @@ For the best fit point, it can be extracted by the `parse()` from `bin_chi2.py`.
 The specific location of the best fit in the chain is output, which can then be located in the flat chain with `pts[<index_of_best_fit>`. 
 
 
-
+Cosmographic Model
+-----------------------------------------
+The master branch can fit $\Lambda$CDM, wCDM, axion, step function $\beta(z)$, and smooth $\beta(z)$. Due to the very different functions, the cosmographic model (a2-a3-a4 expansion) is implemented as a separate branch `cosmo_inde_model`. 
 
 Bibtex entry
 -----------------------------------------
