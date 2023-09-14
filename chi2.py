@@ -7,7 +7,10 @@
 import numpy as np
 import scipy.linalg as la
 from numpy import pi, sqrt, log, log10, exp, power
-from .cosmo import H_at_z, tau_at_z, dA_at_z, muLCDM, LumMod, ADDMod
+try:
+    from .cosmo import H_at_z, tau_at_z, dA_at_z, muLCDM, LumMod, ADDMod
+except:
+    from cosmo import H_at_z, tau_at_z, dA_at_z, muLCDM, LumMod, ADDMod
 # import data
 
 _Mpc_over_cm_ = 3.0857e+24

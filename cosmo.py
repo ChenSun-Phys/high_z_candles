@@ -117,10 +117,10 @@ def H_at_z(z, h0, a2, a3, a4, unit='Mpc'):
     x = np.log10(1.+z)
     # shape = -(1+z)**2/(-1+x*(-2.*a2-3.*a3*x+(1.+x*(a2+a3*x))*np.log(10)))
     shape = (1.+z)**2/(1.
-                       + (2.*a2-np.ln(10.))*x
-                       + (3.*a3 - a2*np.ln(10))*x**2
-                       + (4.*a4 - a3*np.ln(10))*x**3
-                       - (a4*np.ln(10)) * x**4)
+                       + (2.*a2-np.log(10.))*x
+                       + (3.*a3 - a2*np.log(10))*x**2
+                       + (4.*a4 - a3*np.log(10))*x**3
+                       - (a4*np.log(10)) * x**4)
     if unit == 'Mpc':
         res = shape*(h0*100/(_c_/1000.))
     else:
