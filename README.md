@@ -82,14 +82,15 @@ The master branch can fit $\Lambda$CDM, wCDM, axion, step function $\beta(z)$, a
 
 Bibtex entry
 -----------------------------------------
-If you use this code or find it in any way useful for your research, please cite [Sun, Buen-Abad, Fan (2023)](https://arxiv.org/abs/2309.xxxxx). The BibTeX entry is:
+If you use this code or find it in any way useful for your research, please cite [Sun, Buen-Abad, Fan (2023)](https://arxiv.org/abs/2309.07212). The BibTeX entry is:
 
-	@article{Sun:2023,
+	@article{Sun:2023wqq,
 	    author = "Sun, Chen and Buen-Abad, Manuel A. and Fan, JiJi",
 	    title = "{Probing New Physics with High-Redshift Quasars: Axions and Non-standard Cosmology}",
-	    eprint = "2309.xxxxx",
+	    eprint = "2309.07212",
 	    archivePrefix = "arXiv",
 	    primaryClass = "astro-ph.CO",
+		reportNumber = "LA-UR-23-29579",
 	    month = "09",
 	    year = "2023"
 	}
